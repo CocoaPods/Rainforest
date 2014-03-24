@@ -22,7 +22,7 @@ GEM_REPOS = %w[
 desc "Clones all the CocoaPods repositories"
 task :set_up do
   Rake::Task[:clone].invoke
-  Rake::Task[:clone].invoke
+  Rake::Task[:bootstrap].invoke
 end
 
 # Task clone
