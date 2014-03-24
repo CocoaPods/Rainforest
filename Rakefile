@@ -144,7 +144,7 @@ task :status do
   end
 
   subtitle "\nGems with releases"
-  puts gemspecs = Dir['*/*.gemspec']
+  gemspecs = Dir['*/*.gemspec']
   gem_dirs = gemspecs.map { |path| File.dirname(path) }.uniq
   has_pending_releases = false
   gem_dirs.each do |dir|
