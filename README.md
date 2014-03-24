@@ -4,10 +4,10 @@ To effectively farm Cocoa Pods trees are needed (the gems) and those trees need
 an especial and unique habitat to flourish: the Rainforest.
 
 This repository allows to automate the task necessary to develop on CocoaPods.
-In detail the following task can be performed from a centralized location:
+In detail the following task can be performed from a centralised location:
 
 - Cloning of all repositories containing Gems.
-- Centralized bootstrap of all the repositories.
+- Centralised bootstrap of all the repositories.
 - Switch to SSH URLs.
 - Setup of Bundler [Local Git Repos] feature.
 - Pulling of all the repositories.
@@ -21,13 +21,27 @@ In detail the following task can be performed from a centralized location:
 
 To get started run:
 
-```console
+```
 $ git clone https://github.com/CocoaPods/Rainforest.git
 $ cd Rainforest
 $ rake set_up
 ```
 
-To see all the available task run:
+To check that the setup process worked you can run the following command:
+
+```
+$ cd Rainforest
+$ CocoaPods/bin/pod --help
+```
+
+The above means that you can use the checked out version of CocoaPods for development and that you can experiment with your changes directly. If you would like CocoaPods to use pick up the changes of the other checked out dependencies you can use the local git repos features of Bundler:
+
+```
+$ cd Rainforest
+$ rake set_up_local_dependencies
+```
+
+Finally, to see all the available task run:
 
 ```
 $ rake -T
