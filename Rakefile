@@ -153,7 +153,7 @@ task :status do
       tag = `git describe --abbrev=0 2>/dev/null`.chomp
       if tag != ''
         commits_since_last_tag = `git rev-list #{tag}..HEAD --count`.chomp
-        unless commits_since_last_tag == 0
+        unless commits_since_last_tag == '0'
           has_pending_releases = true
           puts "\n- #{dir}\n  #{commits_since_last_tag} commits since #{tag}"
         end
