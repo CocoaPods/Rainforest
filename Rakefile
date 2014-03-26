@@ -25,21 +25,21 @@ end
 # Task clone
 #-----------------------------------------------------------------------------#
 
-desc "Clones all the CocoaPods repositories"
+desc "Clones the GEM repositories"
 task :clone do
   repos = fetch_gem_repos
+  title "Cloning the GEM repositories"
+  clone_repos(repos)
+end
 
-  title "Cloning repositories"
-  repos.each do |repo|
-    name = repo['name']
-    subtitle "\nCloning #{name}"
-    url = repo['clone_url']
-    if File.exist?(name)
-      puts "Already cloned"
-    else
-      sh "git clone #{url}"
-    end
-  end
+# Task clone_all
+#-----------------------------------------------------------------------------#
+
+desc "Clones ALL the CocoaPods repositories"
+task :clone_all do
+  repos = fetch_repos
+  title "Cloning gem repositories"
+  clone_repos(repos)
 end
 
 # Task bootstrap
@@ -189,9 +189,29 @@ def fetch_repos
   url = 'https://api.github.com/orgs/CocoaPods/repos?type=public'
   response = open(url).read
   repos = JSON.parse(response)
-  repos.reject! { |repo| repo['name'] == 'LaunchPad' }
+  repos.reject! { |repo| repo['name'] == 'Rainforest' }
   puts "Found #{repos.count} public repositories"
   repos
+end
+
+# Clones the given repos to a directory named after themselves unless the
+# directory already exists.
+#
+# @param  [Array<Hash>] The description of the repositories.
+#
+# @return [void]
+#
+def clone_repos(repos)
+  repos.each do |repo|
+    name = repo['name']
+    subtitle "\nCloning #{name}"
+    url = repo['clone_url']
+    if File.exist?(name)
+      puts "Already cloned"
+    else
+      sh "git clone #{url}"
+    end
+  end
 end
 
 # UI
