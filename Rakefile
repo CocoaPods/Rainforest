@@ -5,15 +5,12 @@
 GEM_REPOS = %w[
   CLAide
   CocoaPods
-  cocoapods-appledoc
-  cocoapods-docs
-  cocoapods-downloader
-  cocoapods-install-metadata
-  cocoapods-podfile_info
-  cocoapods-trunk.cocoapods.org
-  cocoapods-try
   Core
   Xcodeproj
+  cocoapods-docs
+  cocoapods-downloader
+  cocoapods-podfile_info
+  cocoapods-try
 ]
 
 # Task set-up
