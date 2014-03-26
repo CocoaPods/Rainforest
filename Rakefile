@@ -91,6 +91,7 @@ task :pull do
     Dir.chdir(dir) do
       subtitle "\nPulling #{dir}"
       sh "git pull"
+      sh "git submodule update"
     end
   end
 end
