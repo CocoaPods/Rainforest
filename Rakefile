@@ -130,8 +130,11 @@ task :status do
   subtitle "\nRepositories with a dirty working copy"
   dirty_dirs = dirs.reject do |dir|
     Dir.chdir(dir) do
-      `git status --short`.chomp
-      $?.exitstatus.zero?
+      `git diff --quiet`
+      exit_status = $?.exitstatus
+      `git diff --cached --quiet`
+      cached_exit_status = $?.exitstatus
+      exit_status.zero? && cached_exit_status.zero?
     end
   end
   if dirty_dirs.empty?
