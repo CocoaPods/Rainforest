@@ -148,17 +148,21 @@ task :status do
   gemspecs = Dir['*/*.gemspec']
   gem_dirs = gemspecs.map { |path| File.dirname(path) }.uniq
   has_pending_releases = false
-  gem_dirs.each do |dir|
+  name_commits_tags = gem_dirs.map do |dir|
     Dir.chdir(dir) do
       tag = `git describe --abbrev=0 2>/dev/null`.chomp
       if tag != ''
-        commits_since_last_tag = `git rev-list #{tag}..HEAD --count`.chomp
-        unless commits_since_last_tag == '0'
+        commits_since_last_tag = `git rev-list #{tag}..HEAD --count`.chomp.to_i
+        unless commits_since_last_tag.zero?
           has_pending_releases = true
-          puts "\n- #{dir}\n  #{commits_since_last_tag} commits since #{tag}"
+          [dir, commits_since_last_tag, tag]
         end
       end
     end
+  end
+  name_commits_tags = name_commits_tags.compact.sort_by { |value| value[1] }.reverse
+  name_commits_tags.each do |name_commits_tag|
+    puts "\n- #{name_commits_tag[0]}\n  #{name_commits_tag[1]} commits since #{name_commits_tag[2]}"
   end
 
   unless has_pending_releases
