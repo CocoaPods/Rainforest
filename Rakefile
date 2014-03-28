@@ -170,8 +170,62 @@ task :status do
   end
 end
 
+
+# Release
+#-----------------------------------------------------------------------------#
+
+desc "Run all specs, build and install gem, commit version change, tag version change, and push everything"
+task :release, :gem_dir do |t, args|
+  require 'pathname'
+  require 'date'
+
+  unless ENV["BUNDLE_GEMFILE"].nil?
+    error("This task is not supported under bundle exec")
+    exit 1
+  end
+
+  gem_dir = Pathname(args[:gem_dir])
+  gem_version = gem_version(gem_dir)
+  title "Releasing #{gem_dir} #{gem_version}"
+  unless ENV['SKIP_CHECKS']
+    check_repo_for_release(gem_dir, gem_version)
+    print "You are about to release `#{gem_version}`, is that correct? [y/n] "
+    exit 1 if $stdin.gets.strip.downcase != 'y'
+  end
+
+  Dir.chdir(gem_dir) do
+    subtitle "Updating the repo"
+    sh 'git pull'
+
+    subtitle "Running specs"
+    sh 'bundle exec rake spec'
+
+    subtitle "Building the Gem"
+    sh 'rake build'
+
+    subtitle "Testing gem installation (tmp/gems)"
+    gem_filename = Pathname('pkg') + "#{gem_basename(gem_dir)}-#{gem_version}.gem"
+    tmp = File.expand_path('../tmp', __FILE__)
+    tmp_gems = File.join(tmp, 'gems')
+    silent_sh "rm -rf '#{tmp}'"
+    sh "gem install --install-dir='#{tmp_gems}' #{gem_filename}"
+
+    # Then release
+    sh "git commit -a -m 'Release #{gem_version}'"
+    sh "git tag -a #{gem_version} -m 'Release #{gem_version}'"
+    sh "git push origin master"
+    sh "git push origin --tags"
+    sh "gem push #{gem_filename}"
+  end
+end
+
+
+
 #-----------------------------------------------------------------------------#
 # HELPERS
+#-----------------------------------------------------------------------------#
+
+# Repos Helpers
 #-----------------------------------------------------------------------------#
 
 # @return [Array<Hash>] The list of the CocoaPods repositories which contain a
@@ -218,6 +272,74 @@ def clone_repos(repos)
   end
 end
 
+# Checks the given repo for a release and fails the task if any issue exits
+# listing them.
+#
+# @param [String] gem_dir The repo to check.
+# @param [String] version The version which should be released.
+#
+def check_repo_for_release(repo_dir, version)
+  errors = []
+  Dir.chdir(repo_dir) do
+    if `git symbolic-ref HEAD 2>/dev/null`.strip.split('/').last != 'master'
+      errors << "You need to be on the `master` branch in order to do a release."
+    end
+
+    if `git tag`.strip.split("\n").include?(version)
+      errors << "A tag for version `#{version}` already exists."
+    end
+
+    diff_lines = `git diff --name-only`.strip.split("\n")
+
+    if diff_lines.size == 0
+      errors << "Change the version number of the gem yourself"
+    end
+
+    diff_lines.delete('Gemfile.lock')
+    diff_lines.delete('CHANGELOG.md')
+    unless diff_lines.count == 1
+      # TODO Check that is only the version file changed
+      error = "Only change the version, the CHANGELOG.md and the Gemfile.lock files"
+      error << "\n- " + diff_lines.join("\n- ")
+      errors << error
+    end
+  end
+
+  unless errors.empty?
+    errors.each do |error|
+      $stderr.puts(red("[!] #{error}"))
+    end
+    exit 1
+  end
+end
+
+# Gem Helpers
+#-----------------------------------------------------------------------------#
+
+def gem_version(gem_dir)
+  spec_name = gem_basename(gem_dir) + ".gemspec"
+  spec_path =  gem_dir + spec_name
+  spec = Gem::Specification::load(spec_path.to_s)
+  gem_version = spec.version
+end
+
+def gem_basename(gem_dir)
+  gem_dir.to_s.downcase
+end
+
+# Other Helpers
+#-----------------------------------------------------------------------------#
+
+def silent_sh(command)
+  require 'english'
+  output = `#{command} 2>&1`
+  unless $CHILD_STATUS.success?
+    puts output
+    exit 1
+  end
+  output
+end
+
 # UI
 #-----------------------------------------------------------------------------#
 
@@ -236,7 +358,7 @@ def subtitle(string)
 end
 
 def error(string)
-  raise "[!] #{red(string)}"
+  raise red("[!] #{string}")
 end
 
 # Colorizes a string to green.
