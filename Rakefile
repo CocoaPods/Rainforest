@@ -87,7 +87,7 @@ end
 desc "Pulls all the repositories & updates their submodules"
 task :pull do
   title "Pulling all the repositories"
-  Dir['*/'].each do |dir|
+  repos.each do |dir|
     Dir.chdir(dir) do
       subtitle "\nPulling #{dir}"
       sh "git pull"
@@ -113,22 +113,19 @@ end
 desc "Checks the gems which need a release"
 task :status do
   title "Checking status"
-  dirs = Dir['*/'].map { |dir| dir[0...-1] }
-
-  subtitle "Repositories not in master branch"
+  dirs = repos
   dirs_not_in_master = dirs.reject do |dir|
     Dir.chdir(dir) do
       branch = `git rev-parse --abbrev-ref HEAD`.chomp
-      branch == 'master'
+      ['master', 'develop'].include?(branch)
     end
   end
-  if dirs_not_in_master.empty?
-    puts "All repos are on the master branch"
-  else
+
+  unless dirs_not_in_master.empty?
+    subtitle "Repositories not in master/develop branch"
     puts "- #{dirs_not_in_master.join("\n- ")}"
   end
 
-  subtitle "\nRepositories with a dirty working copy"
   dirty_dirs = dirs.reject do |dir|
     Dir.chdir(dir) do
       `git diff --quiet`
@@ -138,9 +135,9 @@ task :status do
       exit_status.zero? && cached_exit_status.zero?
     end
   end
-  if dirty_dirs.empty?
-    puts "All the repositories have a clean working copy"
-  else
+
+  unless dirty_dirs.empty?
+    subtitle "\nRepositories with a dirty working copy"
     puts "- #{dirty_dirs.join("\n- ")}"
   end
 
@@ -314,6 +311,14 @@ def check_repo_for_release(repo_dir, version)
   end
 end
 
+# @return [Array<String>] All the checked out repos
+#
+def repos
+  result = Dir['*/'].map { |dir| dir[0...-1] }
+  # TODO get rid of the extension dir
+  result.reject{ |repo| repo == 'extensions' }
+end
+
 # Gem Helpers
 #-----------------------------------------------------------------------------#
 
@@ -357,7 +362,6 @@ def title(string)
   puts "-" * 80
   puts cyan(string)
   puts "-" * 80
-  puts
 end
 
 def subtitle(string)
