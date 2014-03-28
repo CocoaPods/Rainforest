@@ -185,8 +185,9 @@ task :release, :gem_dir do |t, args|
   end
 
   gem_dir = Pathname(args[:gem_dir])
+  gem_name = gem_name(gem_dir)
   gem_version = gem_version(gem_dir)
-  title "Releasing #{gem_dir} #{gem_version}"
+  title "Releasing #{gem_name} #{gem_version}"
   unless ENV['SKIP_CHECKS']
     check_repo_for_release(gem_dir, gem_version)
     print "You are about to release `#{gem_version}`, is that correct? [y/n] "
@@ -204,7 +205,7 @@ task :release, :gem_dir do |t, args|
     sh 'rake build'
 
     subtitle "Testing gem installation (tmp/gems)"
-    gem_filename = Pathname('pkg') + "#{gem_basename(gem_dir)}-#{gem_version}.gem"
+    gem_filename = Pathname('pkg') + "#{gem_name}-#{gem_version}.gem"
     tmp = File.expand_path('../tmp', __FILE__)
     tmp_gems = File.join(tmp, 'gems')
     silent_sh "rm -rf '#{tmp}'"
@@ -285,7 +286,7 @@ def check_repo_for_release(repo_dir, version)
       errors << "You need to be on the `master` branch in order to do a release."
     end
 
-    if `git tag`.strip.split("\n").include?(version)
+    if `git tag`.strip.split("\n").include?(version.to_s)
       errors << "A tag for version `#{version}` already exists."
     end
 
@@ -316,15 +317,21 @@ end
 # Gem Helpers
 #-----------------------------------------------------------------------------#
 
-def gem_version(gem_dir)
-  spec_name = gem_basename(gem_dir) + ".gemspec"
-  spec_path =  gem_dir + spec_name
+def spec(gem_dir)
+  files = Dir.glob("#{gem_dir}/*.gemspec")
+  unless files.count == 1
+    error("Unable to select a gemspec #{spec_file}")
+  end
+  spec_path = files.first
   spec = Gem::Specification::load(spec_path.to_s)
-  gem_version = spec.version
 end
 
-def gem_basename(gem_dir)
-  gem_dir.to_s.downcase
+def gem_version(gem_dir)
+  spec(gem_dir).version
+end
+
+def gem_name(gem_dir)
+  spec(gem_dir).name
 end
 
 # Other Helpers
