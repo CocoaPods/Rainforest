@@ -52,8 +52,7 @@ task :bootstrap do
     Dir.chdir(dir) do
       subtitle "Bootstrapping #{dir}"
       if File.exist?('Rakefile')
-        has_bootstrap_task = `rake --no-search --tasks bootstrap`.include?('rake bootstrap')
-        if has_bootstrap_task
+        if has_rake_task?('bootstrap')
           sh "rake --no-search bootstrap"
         end
       end
@@ -171,6 +170,15 @@ end
 # Release
 #-----------------------------------------------------------------------------#
 
+# The pre_release and post_release tasks are called in the Rakefiles of the
+# gems.
+#
+# FEATURES:
+# - Dependencies are checked through the installation of the gem.
+#
+# TODO:
+# - Should the bundles be updated?
+#
 desc "Run all specs, build and install gem, commit version change, tag version change, and push everything"
 task :release, :gem_dir do |t, args|
   require 'pathname'
@@ -198,8 +206,10 @@ task :release, :gem_dir do |t, args|
     subtitle "Running specs"
     sh 'bundle exec rake spec'
 
-    subtitle "Running pre-release task"
-    sh 'rake pre_release'
+    if has_rake_task?('pre_release')
+      subtitle "Running pre-release task"
+      sh 'rake pre_release'
+    end
 
     subtitle "Building the Gem"
     sh 'rake build'
@@ -211,7 +221,6 @@ task :release, :gem_dir do |t, args|
     silent_sh "rm -rf '#{tmp}'"
     sh "gem install --install-dir='#{tmp_gems}' #{gem_filename}"
 
-    # Then release
     subtitle "Commiting, tagging & Pushing"
     sh "git commit -a -m 'Release #{gem_version}'"
     sh "git tag -a #{gem_version} -m 'Release #{gem_version}'"
@@ -220,6 +229,11 @@ task :release, :gem_dir do |t, args|
 
     subtitle "Releasing the Gem"
     sh "gem push #{gem_filename}"
+
+    if has_rake_task?('post_release')
+      subtitle "Running post_release task"
+      sh 'rake post_release'
+    end
   end
 end
 
@@ -347,6 +361,13 @@ end
 
 # Other Helpers
 #-----------------------------------------------------------------------------#
+
+# @return [Bool] Wether the Rakefile in the current working directory has a
+#         task with the given name.
+#
+def has_rake_task?(task)
+  `rake --no-search --tasks #{task}`.include?("rake #{task}")
+end
 
 def silent_sh(command)
   require 'english'
