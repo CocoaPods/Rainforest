@@ -50,7 +50,7 @@ task :bootstrap do
   title "Bootstrapping all the repositories"
   Dir['*/'].each do |dir|
     Dir.chdir(dir) do
-      subtitle "\nBootstrapping #{dir}"
+      subtitle "Bootstrapping #{dir}"
       if File.exist?('Rakefile')
         has_bootstrap_task = `rake --no-search --tasks bootstrap`.include?('rake bootstrap')
         if has_bootstrap_task
@@ -89,7 +89,7 @@ task :pull do
   title "Pulling all the repositories"
   repos.each do |dir|
     Dir.chdir(dir) do
-      subtitle "\nPulling #{dir}"
+      subtitle "Pulling #{dir}"
       sh "git pull"
       sh "git submodule update"
     end
@@ -137,11 +137,11 @@ task :status do
   end
 
   unless dirty_dirs.empty?
-    subtitle "\nRepositories with a dirty working copy"
+    subtitle "Repositories with a dirty working copy"
     puts "- #{dirty_dirs.join("\n- ")}"
   end
 
-  subtitle "\nGems with releases"
+  subtitle "Gems with releases"
   gemspecs = Dir['*/*.gemspec']
   gem_dirs = gemspecs.map { |path| File.dirname(path) }.uniq
   has_pending_releases = false
@@ -198,6 +198,9 @@ task :release, :gem_dir do |t, args|
     subtitle "Running specs"
     sh 'bundle exec rake spec'
 
+    subtitle "Running pre-release task"
+    sh 'rake pre_release'
+
     subtitle "Building the Gem"
     sh 'rake build'
 
@@ -209,10 +212,13 @@ task :release, :gem_dir do |t, args|
     sh "gem install --install-dir='#{tmp_gems}' #{gem_filename}"
 
     # Then release
+    subtitle "Commiting, tagging & Pushing"
     sh "git commit -a -m 'Release #{gem_version}'"
     sh "git tag -a #{gem_version} -m 'Release #{gem_version}'"
     sh "git push origin master"
     sh "git push origin --tags"
+
+    subtitle "Releasing the Gem"
     sh "gem push #{gem_filename}"
   end
 end
@@ -260,7 +266,7 @@ end
 def clone_repos(repos)
   repos.each do |repo|
     name = repo['name']
-    subtitle "\nCloning #{name}"
+    subtitle "Cloning #{name}"
     url = repo['clone_url']
     if File.exist?(name)
       puts "Already cloned"
@@ -365,7 +371,7 @@ def title(string)
 end
 
 def subtitle(string)
-  puts green(string)
+  puts "\n#{green(string)}"
 end
 
 def error(string)
