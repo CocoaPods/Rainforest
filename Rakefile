@@ -59,6 +59,13 @@ task :bootstrap do
     end
   end
 
+  subtitle "Building Xcodeproj native extensions"
+  puts "NOTE: This step needs to be performed every-time the extension are" \
+    " modified."
+  Dir.chdir('Xcodeproj') do
+    sh "rake ext:cleanbuild"
+  end
+
   disk_usage = `du -h -c -d 0`.split(' ').first
   puts "\nDisk usage: #{disk_usage}"
 end
