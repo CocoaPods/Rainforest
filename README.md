@@ -37,7 +37,6 @@ $ CocoaPods/bin/pod --help
 The above means that you can use the checked out version of CocoaPods for development and that you can experiment with your changes directly. If you would like CocoaPods to use pick up the changes of the other checked out dependencies you can use the local git repos features of Bundler:
 
 ```
-$ cd Rainforest
 $ rake set_up_local_dependencies
 ```
 
