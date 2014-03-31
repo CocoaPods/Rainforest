@@ -148,8 +148,6 @@ task :status do
   end
 
   subtitle "Gems with releases"
-  gemspecs = Dir['*/*.gemspec']
-  gem_dirs = gemspecs.map { |path| File.dirname(path) }.uniq
   has_pending_releases = false
   name_commits_tags = gem_dirs.map do |dir|
     Dir.chdir(dir) do
@@ -173,6 +171,21 @@ task :status do
   end
 end
 
+# Task status
+#-----------------------------------------------------------------------------#
+
+desc "Prints the last released version of every gem"
+task :versions do
+  GEM_REPOS.each do |dir|
+    begin
+    spec = spec(dir)
+    subtitle spec.name
+    puts spec.version
+    rescue
+      next
+    end
+  end
+end
 
 # Release
 #-----------------------------------------------------------------------------#
@@ -348,6 +361,13 @@ end
 
 # Gem Helpers
 #-----------------------------------------------------------------------------#
+
+# @return [Array<String>] the directory of the gems.
+#
+def gem_dirs
+  gemspecs = Dir['*/*.gemspec']
+  gemspecs.map { |path| File.dirname(path) }.uniq
+end
 
 def spec(gem_dir)
   files = Dir.glob("#{gem_dir}/*.gemspec")
