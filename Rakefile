@@ -176,6 +176,7 @@ end
 
 desc "Prints the last released version of every gem"
 task :versions do
+  title "Printing versions"
   GEM_REPOS.each do |dir|
     begin
     spec = spec(dir)
@@ -340,6 +341,11 @@ def check_repo_for_release(repo_dir, version)
       error = "Only change the version, the CHANGELOG.md and the Gemfile.lock files"
       error << "\n- " + diff_lines.join("\n- ")
       errors << error
+    end
+
+    unless Pathname.new('CHANGELOG.md').read.lines.include?("## #{version}\n")
+      errors << "The CHANGELOG.md doesn't include the released version " \
+        "`## #{version}`.Update it manually."
     end
   end
 
