@@ -111,7 +111,6 @@ task :set_up_local_dependencies do
   Dir.chdir('Xcodeproj') do
     sh "rake ext:cleanbuild"
   end
-
 end
 
 # Task status
@@ -151,9 +150,9 @@ task :status do
   subtitle "Gems with releases"
   has_pending_releases = false
   name_commits_tags = gem_dirs.map do |dir|
-    Dir.chdir(dir) do
-      tag = `git describe --abbrev=0 2>/dev/null`.chomp
-      if tag != ''
+    tag = last_tag(dir)
+    if tag != ''
+      Dir.chdir(dir) do
         commits_since_last_tag = `git rev-list #{tag}..HEAD --count`.chomp.to_i
         unless commits_since_last_tag.zero?
           has_pending_releases = true
@@ -214,7 +213,7 @@ task :release, :gem_dir do |t, args|
   gem_dir = Pathname(args[:gem_dir])
   gem_name = gem_name(gem_dir)
   gem_version = gem_version(gem_dir)
-  title "Releasing #{gem_name} #{gem_version}"
+  title "Releasing #{gem_name} #{gem_version} (from #{last_tag(gem_dir)})"
   unless ENV['SKIP_CHECKS']
     check_repo_for_release(gem_dir, gem_version)
     print "You are about to release `#{gem_version}`, is that correct? [y/n] "
@@ -391,6 +390,12 @@ end
 
 def gem_name(gem_dir)
   spec(gem_dir).name
+end
+
+def last_tag(dir)
+  Dir.chdir(dir) do
+    `git describe --abbrev=0 2>/dev/null`.chomp
+  end
 end
 
 # Other Helpers
