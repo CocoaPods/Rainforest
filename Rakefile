@@ -103,8 +103,9 @@ end
 desc "Setups the repositories to use their dependencies from the checkouts (Bundler Local Git Repos feature)"
 task :set_up_local_dependencies do
   title "Setting up Bundler's Local Git Repos"
-  GEM_REPOS.each do |gem_name|
-    sh "bundle config local.#{gem_name} ./#{gem_name}"
+  GEM_REPOS.each do |repo|
+    spec = spec(repo)
+    sh "bundle config local.#{spec.name} ./#{repo}"
   end
 
   subtitle "Building Xcodeproj native extensions"
