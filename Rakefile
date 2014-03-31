@@ -13,6 +13,8 @@ GEM_REPOS = %w[
   cocoapods-try
 ]
 
+task :default => :status
+
 # Task set-up
 #-----------------------------------------------------------------------------#
 
