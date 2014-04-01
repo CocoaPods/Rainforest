@@ -92,12 +92,12 @@ desc "Pulls all the repositories & updates their submodules"
 task :pull do
   title "Pulling all the repositories"
   subtitle "Pulling Rainforest"
-  sh "git pull"
+  sh "git pull --no-commit"
 
   repos.each do |dir|
     Dir.chdir(dir) do
       subtitle "Pulling #{dir}"
-      sh "git pull"
+      sh "git pull --no-commit"
       sh "git submodule update"
     end
   end
