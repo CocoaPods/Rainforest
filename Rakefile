@@ -2,11 +2,14 @@
 # @return [Array<String>] The list of the names of the CocoaPods repositories
 #         which store a gem.
 #
+# @note   The order is from more important to less important and consequently
+#         the gems at the bottom are dependencies of the gems at the top.
+#
 GEM_REPOS = %w[
-  CLAide
   CocoaPods
   Core
   Xcodeproj
+  CLAide
   cocoapods-docs
   cocoapods-downloader
   cocoapods-podfile_info
@@ -96,6 +99,27 @@ task :pull do
       subtitle "Pulling #{dir}"
       sh "git pull"
       sh "git submodule update"
+    end
+  end
+end
+
+desc "Gets the count of the open issues" 
+task :issues do
+  require 'open-uri'
+  require 'json'
+
+  title 'Fetching open issues'
+  GEM_REPOS.each do |name|
+    url = "https://api.github.com/repos/CocoaPods/#{name}/issues?state=open&per_page=100"
+    response = open(url).read
+    issues = JSON.parse(response)
+    next if issues.empty?
+
+    subtitle name
+    if issues.count == 100
+      puts "100 or more open issues"
+    else
+      puts "#{issues.count} open issues"
     end
   end
 end
