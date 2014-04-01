@@ -88,6 +88,9 @@ end
 desc "Pulls all the repositories & updates their submodules"
 task :pull do
   title "Pulling all the repositories"
+  subtitle "Pulling Rainforest"
+  sh "git pull"
+
   repos.each do |dir|
     Dir.chdir(dir) do
       subtitle "Pulling #{dir}"
