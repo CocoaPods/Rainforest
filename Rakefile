@@ -103,7 +103,7 @@ task :pull do
   end
 end
 
-desc "Gets the count of the open issues" 
+desc "Gets the count of the open issues"
 task :issues do
   require 'open-uri'
   require 'json'
@@ -201,7 +201,41 @@ task :status do
   end
 end
 
-# Task status
+# Task clean-up
+#-----------------------------------------------------------------------------#
+
+desc "Performs safe clean-up operations"
+task :cleanup do
+  title "Cleaning up"
+  repos.each do |repo|
+    Dir.chdir(repo) do
+      subtitle repo
+      cleaned = false
+      branches = `git branch`
+      default_branches = ['master', 'develop']
+      default_branch = default_branches.find { |db| branches.include?(db) }
+      if default_branch
+        merged_branches = `git branch --merged #{default_branch}`.split("\n")
+        merged_branches.map! { |line| line.split(' ').last }
+        merged_branches.delete(default_branch)
+        merged_branches.each do |merged_brach|
+          cleaned = true
+          sh "git branch -d #{merged_brach}"
+        end
+      else
+        cleaned = true
+        puts "Skipping because default branch could not be found: #{branches}"
+      end
+
+      unless cleaned
+        puts "Already clean"
+      end
+    end
+  end
+end
+
+
+# Task versions
 #-----------------------------------------------------------------------------#
 
 desc "Prints the last released version of every gem"
