@@ -49,6 +49,21 @@ Finally, to see all the available task run:
 $ rake -T
 ```
 
+### Useful tasks
+
+- `rake pull`: Pulls all the repos and updates the submodules.
+- `rake cleanup`: Performs safe cleanup operations like deleting merged
+  branches.
+- `rake status`: Prints the repositories with un-merged branches or a dirty
+  working copy and lists the gems with commits after the last release.
+
+### Tasks for the Core team
+
+- `rake clone_all`: Clones all the CocoaPods repositories
+- `rake switch_to_ssh`: If SSH is your fancy.
+- `rake issues`: Prints the count of the open issues for each gem.
+- `rake release[gem_dir]`: Releases the gem with the given name.
+
 ## Collaborate
 
 All CocoaPods development happens on GitHub, there is a repository for

@@ -146,7 +146,7 @@ end
 # Task status
 #-----------------------------------------------------------------------------#
 
-desc "Checks the gems which need a release"
+desc "Prints the repositories with un-merged branches or a dirty working copy and lists the gems with commits after the last release."
 task :status do
   title "Checking status"
 
