@@ -24,7 +24,7 @@ To get started run:
 ```
 $ git clone https://github.com/CocoaPods/Rainforest.git
 $ cd Rainforest
-$ rake set_up
+$ rake bootstrap
 ```
 
 To check that the setup process worked you can run the following command:
@@ -34,7 +34,10 @@ $ cd Rainforest
 $ CocoaPods/bin/pod --help
 ```
 
-The above means that you can use the checked out version of CocoaPods for development and that you can experiment with your changes directly. If you would like CocoaPods to use pick up the changes of the other checked out dependencies you can use the local git repos features of Bundler:
+The above means that you can use the checked out version of CocoaPods for
+development and that you can experiment with your changes directly. If you
+would like CocoaPods to use pick up the changes of the other checked out
+dependencies you can use the local git repos features of Bundler:
 
 ```
 $ rake set_up_local_dependencies

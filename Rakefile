@@ -22,9 +22,9 @@ task :default => :status
 #-----------------------------------------------------------------------------#
 
 desc "Clones all the CocoaPods repositories"
-task :set_up do
+task :bootstrap do
   Rake::Task[:clone].invoke
-  Rake::Task[:bootstrap].invoke
+  Rake::Task[:bootstrap_repos].invoke
 end
 
 # Task clone
@@ -51,7 +51,7 @@ end
 #-----------------------------------------------------------------------------#
 
 desc "Runs the Bootstrap task on all the repositories"
-task :bootstrap do
+task :bootstrap_repos do
   title "Bootstrapping all the repositories"
   Dir['*/'].each do |dir|
     Dir.chdir(dir) do
@@ -149,8 +149,8 @@ end
 desc "Checks the gems which need a release"
 task :status do
   title "Checking status"
-  dirs = repos
-  dirs_not_in_master = dirs.reject do |dir|
+
+  dirs_not_in_master = repos.reject do |dir|
     Dir.chdir(dir) do
       branch = `git rev-parse --abbrev-ref HEAD`.chomp
       ['master', 'develop'].include?(branch)
@@ -162,7 +162,22 @@ task :status do
     puts "- #{dirs_not_in_master.join("\n- ")}"
   end
 
-  dirty_dirs = dirs.reject do |dir|
+  dirs_with_unmerged_branches = repos.map do |dir|
+    Dir.chdir(dir) do
+      base_branch = default_branch
+      branches = git_branch_list(" --no-merged #{base_branch}")
+      unless branches.empty?
+        "#{dir}: #{branches.join(', ')}"
+      end
+    end
+  end.compact
+
+  unless dirs_with_unmerged_branches.empty?
+    subtitle "Repositories with un-merged branches"
+    puts "- #{dirs_with_unmerged_branches.join("\n- ")}"
+  end
+
+  dirty_dirs = repos.reject do |dir|
     Dir.chdir(dir) do
       `git diff --quiet`
       exit_status = $?.exitstatus
@@ -208,16 +223,14 @@ desc "Performs safe clean-up operations"
 task :cleanup do
   title "Cleaning up"
   repos.each do |repo|
+
     Dir.chdir(repo) do
       subtitle repo
       cleaned = false
-      branches = `git branch`
-      default_branches = ['master', 'develop']
-      default_branch = default_branches.find { |db| branches.include?(db) }
-      if default_branch
-        merged_branches = `git branch --merged #{default_branch}`.split("\n")
-        merged_branches.map! { |line| line.split(' ').last }
-        merged_branches.delete(default_branch)
+      base_branch = default_branch
+      if base_branch
+        merged_branches =  git_branch_list("--merged #{base_branch}")
+        merged_branches.delete(base_branch)
         merged_branches.each do |merged_brach|
           cleaned = true
           sh "git branch -d #{merged_brach}"
@@ -427,6 +440,22 @@ def repos
   result = Dir['*/'].map { |dir| dir[0...-1] }
   # TODO get rid of the extension dir
   result.reject{ |repo| repo == 'extensions' }
+end
+
+# @return [Array<String>]
+#
+def git_branch_list(arguments = nil)
+  branches = `git branch #{arguments}`.split("\n")
+  branches.map { |line| line.split(' ').last }
+end
+
+def default_branch
+  default_branches = ['master', 'develop']
+  branches = git_branch_list
+  common = branches & default_branches
+  if common.count == 1
+    common.first
+  end
 end
 
 # Gem Helpers
