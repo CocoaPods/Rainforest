@@ -16,6 +16,11 @@ GEM_REPOS = %w[
   cocoapods-try
 ]
 
+# @return [Array<String>] The list of the repos which should be cloned by
+#         default.
+#
+DEFAULT_REPOS = GEM_REPOS + %w( pod-template )
+
 task :default => :status
 
 # Task set-up
@@ -32,7 +37,7 @@ end
 
 desc "Clones the GEM repositories"
 task :clone do
-  repos = fetch_gem_repos
+  repos = fetch_default_repos
   title "Cloning the GEM repositories"
   clone_repos(repos)
 end
@@ -73,7 +78,7 @@ end
 
 desc "Points the origin remote of all the git repos to use the SSH URL"
 task :switch_to_ssh do
-  repos = fetch_gem_repos
+  repos = fetch_default_repos
   title "Setting SSH URLs"
   repos.each do |repo|
     name = repo['name']
@@ -347,9 +352,9 @@ end
 # @return [Array<Hash>] The list of the CocoaPods repositories which contain a
 # Gem as returned by the GitHub API.
 #
-def fetch_gem_repos
+def fetch_default_repos
   fetch_repos.select do |repo|
-    GEM_REPOS.include?(repo['name'])
+    DEFAULT_REPOS.include?(repo['name'])
   end
 end
 
