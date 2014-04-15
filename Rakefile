@@ -132,7 +132,7 @@ end
 # Task set_up_local_dependencies
 #-----------------------------------------------------------------------------#
 
-desc "Setups the repositories to use their dependencies from the checkouts (Bundler Local Git Repos feature)"
+desc "Setups the repositories to use their dependencies from the rainforest (Bundler Local Git Repos feature)"
 task :set_up_local_dependencies do
   title "Setting up Bundler's Local Git Repos"
   GEM_REPOS.each do |repo|
@@ -147,6 +147,19 @@ task :set_up_local_dependencies do
     sh "rake ext:cleanbuild"
   end
 end
+
+# Task remove_local_dependencies
+#-----------------------------------------------------------------------------#
+
+desc "Remove the local dev dependencies (Bundler Local Git Repos feature)"
+task :set_up_local_dependencies do
+  title "Removing Rainforest Gems from Bundler's Local Git Repos"
+  GEM_REPOS.each do |repo|
+    spec = spec(repo)
+    sh "bundle config local.#{spec.name} --delete"
+  end
+end
+
 
 # Task status
 #-----------------------------------------------------------------------------#
