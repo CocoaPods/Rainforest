@@ -134,11 +134,11 @@ task :issues do
   end
 end
 
-# Task set_up_local_dependencies
+# Task local_dependencies_set
 #-----------------------------------------------------------------------------#
 
 desc "Setups the repositories to use their dependencies from the rainforest (Bundler Local Git Repos feature)"
-task :set_up_local_dependencies do
+task :local_dependencies_set do
   title "Setting up Bundler's Local Git Repos"
   GEM_REPOS.each do |repo|
     spec = spec(repo)
@@ -153,18 +153,17 @@ task :set_up_local_dependencies do
   end
 end
 
-# Task remove_local_dependencies
+# Task local_dependencies_unset
 #-----------------------------------------------------------------------------#
 
-desc "Remove the local dev dependencies (Bundler Local Git Repos feature)"
-task :set_up_local_dependencies do
-  title "Removing Rainforest Gems from Bundler's Local Git Repos"
+desc "Configure the repositories to use their dependencies from the git remotes"
+task :local_dependencies_unset do
+  title "Setting up Bundler's Local Git Repos"
   GEM_REPOS.each do |repo|
     spec = spec(repo)
-    sh "bundle config local.#{spec.name} --delete"
+    sh "bundle config --delete local.#{spec.name}"
   end
 end
-
 
 # Task status
 #-----------------------------------------------------------------------------#

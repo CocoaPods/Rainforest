@@ -40,7 +40,7 @@ would like CocoaPods to use pick up the changes of the other checked out
 dependencies you can use the local git repos features of Bundler:
 
 ```
-$ rake set_up_local_dependencies
+$ rake local_dependencies_set
 ```
 
 Finally, to see all the available task run:
