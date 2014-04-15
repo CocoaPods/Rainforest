@@ -137,7 +137,7 @@ end
 # Task local_dependencies_set
 #-----------------------------------------------------------------------------#
 
-desc "Setups the repositories to use their dependencies from the rainforest (Bundler Local Git Repos feature)"
+desc "Configure the repositories to use their dependencies from the rainforest (Bundler Local Git Repos feature)"
 task :local_dependencies_set do
   title "Setting up Bundler's Local Git Repos"
   GEM_REPOS.each do |repo|
