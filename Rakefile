@@ -10,8 +10,10 @@ GEM_REPOS = %w[
   Core
   Xcodeproj
   CLAide
+  VersionKit
   cocoapods-docs
   cocoapods-downloader
+  cocoapods-plugins
   cocoapods-podfile_info
   cocoapods-try
 ]
