@@ -163,7 +163,7 @@ task :local_dependencies_unset do
   title "Setting up Bundler's Local Git Repos"
   GEM_REPOS.each do |repo|
     spec = spec(repo)
-    sh "bundle config --delete local.#{spec.name}"
+    sh "bundle config local.#{spec.name} --delete"
   end
 end
 
