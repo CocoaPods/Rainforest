@@ -106,11 +106,26 @@ task :pull do
   subtitle "Pulling Rainforest"
   sh "git pull --no-commit"
 
-  repos.each do |dir|
+  updated_repos = []
+  repos[0..5].each do |dir|
     Dir.chdir(dir) do
       subtitle "Pulling #{dir}"
-      sh "git pull --no-commit"
-      sh "git submodule update"
+      sh "git remote update"
+      unless `git status -uno`.include?('is up-to-date')
+        updated_repos << dir
+        sh "git pull --no-commit"
+        sh "git submodule update"
+      end
+    end
+  end
+
+  unless updated_repos.empty?
+    title "Summary"
+    updated_repos.each do |dir|
+      subtitle dir
+      Dir.chdir(dir) do
+        puts `git log ORIG_HEAD..`
+      end
     end
   end
 end
