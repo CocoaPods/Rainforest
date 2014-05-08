@@ -251,28 +251,29 @@ end
 desc "Performs safe clean-up operations"
 task :cleanup do
   title "Cleaning up"
+  cleaned = false
   repos.each do |repo|
-
     Dir.chdir(repo) do
-      subtitle repo
-      cleaned = false
       base_branch = default_branch
       if base_branch
         merged_branches =  git_branch_list("--merged #{base_branch}")
         merged_branches.delete(base_branch)
-        merged_branches.each do |merged_brach|
-          cleaned = true
-          sh "git branch -d #{merged_brach}"
+        unless merged_branches.count.zero?
+          subtitle repo
+          merged_branches.each do |merged_brach|
+            cleaned = true
+            sh "git branch -d #{merged_brach}"
+          end
         end
       else
-        cleaned = true
+        subtitle repo
         puts "Skipping because default branch could not be found: #{branches}"
       end
-
-      unless cleaned
-        puts "Already clean"
-      end
     end
+  end
+
+  unless cleaned
+    puts "Nothing to clean"
   end
 end
 
