@@ -127,11 +127,16 @@ task :issues do
     issues = JSON.parse(response)
     next if issues.empty?
 
+    pull_requests = issues.select { |issue| issue.has_key?('pull_request') }
     subtitle name
     if issues.count == 100
       puts "100 or more open issues"
     else
       puts "#{issues.count} open issues"
+    end
+
+    unless pull_requests.empty?
+      puts "#{pull_requests.count} pull requests"
     end
   end
 end
