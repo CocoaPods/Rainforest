@@ -1,6 +1,6 @@
 
 # @return [Array<String>] The list of the names of the CocoaPods repositories
-#         which store a gem.
+#         which store a gem or are related to the development of the gems.
 #
 # @note   The order is from more important to less important and consequently
 #         the gems at the bottom are dependencies of the gems at the top.
@@ -16,6 +16,7 @@ GEM_REPOS = %w[
   cocoapods-plugins
   cocoapods-podfile_info
   cocoapods-try
+  shared
 ]
 
 # @return [Array<String>] The list of the repos which should be cloned by
@@ -107,7 +108,7 @@ task :pull do
   sh "git pull --no-commit"
 
   updated_repos = []
-  repos[0..5].each do |dir|
+  repos.each do |dir|
     Dir.chdir(dir) do
       subtitle "Pulling #{dir}"
       sh "git remote update"
@@ -406,8 +407,20 @@ def fetch_repos
   require 'open-uri'
   title "Fetching repositories list"
   url = 'https://api.github.com/orgs/CocoaPods/repos?type=public'
-  response = open(url).read
-  repos = JSON.parse(response)
+  repos = []
+  loop do
+    file = open(url)
+    response = file.read
+    repos.concat(JSON.parse(response))
+
+    link = file.metas['link'].first
+    if match = link.match(/<(.*)>; rel="next"/)
+      url = match.captures.first
+    else
+      break
+    end
+  end
+
   repos.reject! { |repo| repo['name'] == 'Rainforest' }
   puts "Found #{repos.count} public repositories"
   repos
