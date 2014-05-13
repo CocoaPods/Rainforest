@@ -112,7 +112,8 @@ task :pull do
     Dir.chdir(dir) do
       subtitle "Pulling #{dir}"
       sh "git remote update"
-      unless `git status -uno`.include?('is up-to-date')
+      status = `git status -uno`
+      unless status.include?('up-to-date') || status.include?('ahead')
         updated_repos << dir
         sh "git pull --no-commit"
         sh "git submodule update"
