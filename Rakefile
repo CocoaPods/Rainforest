@@ -530,7 +530,7 @@ end
 def spec(gem_dir)
   files = Dir.glob("#{gem_dir}/*.gemspec")
   unless files.count == 1
-    error("Unable to select a gemspec #{spec_file}")
+    error("Unable to select a gemspec #{gem_dir}")
   end
   spec_path = files.first
   spec = Gem::Specification::load(spec_path.to_s)
