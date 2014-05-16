@@ -6,13 +6,13 @@ a special and unique habitat to flourish: the Rainforest.
 This repository allows you to automate the tasks necessary to develop CocoaPods.
 In detail, the following tasks can be performed from a centralised location:
 
-- Clone all repositories containing gems
-- Centralise bootstrapping of all the repositories
-- Switch to SSH URLs
-- Set up Bundler's [Local Git Repos] feature
-- Pull of all the repositories
+- Clone all repositories containing gems.
+- Centralise bootstrapping of all the repositories.
+- Switch to SSH URLs.
+- Set up Bundler's [Local Git Repos] feature.
+- Pull of all the repositories.
 - Check the status of each repository, scanning for dirty working copies or
-  gems which should be released
+  gems which should be released.
 
 [Local Git Repos]: http://bundler.io/v1.5/git.html
 
