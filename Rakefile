@@ -16,13 +16,15 @@ GEM_REPOS = %w[
   cocoapods-plugins
   cocoapods-podfile_info
   cocoapods-try
-  shared
 ]
 
 # @return [Array<String>] The list of the repos which should be cloned by
 #         default.
 #
-DEFAULT_REPOS = GEM_REPOS + %w( pod-template )
+DEFAULT_REPOS = GEM_REPOS + %w[
+  pod-template
+  shared
+]
 
 task :default => :status
 
