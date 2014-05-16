@@ -66,13 +66,13 @@ begin
     clone_repos(repos)
   end
   
-  # Task bootstrap
+  # Task bootstrap_repos
   #-----------------------------------------------------------------------------#
   
   desc "Runs the Bootstrap task on all the repositories"
   task :bootstrap_repos do
     title "Bootstrapping all the repositories"
-  Dir['*/'].each do |dir|
+    GEM_REPOS.each do |dir|
       Dir.chdir(dir) do
         subtitle "Bootstrapping #{dir}"
         if File.exist?('Rakefile')
