@@ -18,13 +18,22 @@ GEM_REPOS = %w[
   cocoapods-try
 ]
 
-# @return [Array<String>] The list of the repos which should be cloned by
-#         default.
+# @return [Array<String>] The list of the repos contains "template" contents
+#         to be used as a model.
 #
-DEFAULT_REPOS = GEM_REPOS + %w[
+# @note Such repositories will be excluded from tasks like bootstrap_repos
+#       to avoid running `rake` on them, as their Rakefile are not intended
+#       to be used in-place in the repository, but only to serve as a model.
+#
+TEMPLATE_REPOS = %w[
   pod-template
   shared
 ]
+
+# @return [Array<String>] The list of the repos which should be cloned by
+#         default.
+#
+DEFAULT_REPOS = GEM_REPOS + TEMPLATE_REPOS
 
 task :default => :status
 
@@ -72,13 +81,11 @@ begin
   desc "Runs the Bootstrap task on all the repositories"
   task :bootstrap_repos do
     title "Bootstrapping all the repositories"
-    GEM_REPOS.each do |dir|
+    rakefile_repos.each do |dir|
       Dir.chdir(dir) do
         subtitle "Bootstrapping #{dir}"
-        if File.exist?('Rakefile')
-          if has_rake_task?('bootstrap')
-            sh "rake --no-search bootstrap"
-          end
+        if has_rake_task?('bootstrap')
+          sh "rake --no-search bootstrap"
         end
       end
     end
@@ -508,6 +515,13 @@ def repos
   result = Dir['*/'].map { |dir| dir[0...-1] }
   # TODO get rid of the extension dir
   result.reject{ |repo| repo == 'extensions' }
+end
+
+# @return [Array<String>] All the directories that contains a Rakefile,
+#         except those in TEMPLATE_REPOS which should be excluded
+#
+def rakefile_repos
+  Dir['*/Rakefile'].map { |file| File.dirname(file) }
 end
 
 # @return [Array<String>]
