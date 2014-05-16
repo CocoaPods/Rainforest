@@ -4,10 +4,10 @@ To effectively farm CocoaPods, trees are needed (the gems), and those trees need
 a special and unique habitat to flourish: the Rainforest.
 
 This repository allows you to automate the tasks necessary to develop CocoaPods.
-In detail, the following tasks can be performed from a centralized location:
+In detail, the following tasks can be performed from a centralised location:
 
 - Clone all repositories containing gems
-- Centralize bootstrapping of all the repositories
+- Centralise bootstrapping of all the repositories
 - Switch to SSH URLs
 - Set up Bundler [Local Git Repos] feature
 - Pull of all the repositories
