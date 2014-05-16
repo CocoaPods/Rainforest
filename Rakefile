@@ -33,12 +33,13 @@ task :default => :status
 
 desc "Clones all the CocoaPods repositories"
 task :bootstrap do
-  if system('which bundler')
+  if system('which bundle')
     Rake::Task[:clone].invoke
     Rake::Task[:bootstrap_repos].invoke
   else
-    puts red("\nPlease install bundler manually")
-    puts "$ [sudo] gem install bundler"
+	$stderr.puts red("[!] Please install the bundler gem manually:\n" \
+	  '    $ [sudo] gem install bundler')
+	exit 1
   end
 end
 
