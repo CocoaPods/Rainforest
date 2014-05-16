@@ -9,7 +9,7 @@ In detail, the following tasks can be performed from a centralised location:
 - Clone all repositories containing gems
 - Centralise bootstrapping of all the repositories
 - Switch to SSH URLs
-- Set up Bundler [Local Git Repos] feature
+- Set up Bundler's [Local Git Repos] feature
 - Pull of all the repositories
 - Check the status of each repository, scanning for dirty working copies or
   gems which should be released
