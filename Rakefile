@@ -200,7 +200,9 @@ begin
     title "Setting up Bundler's Local Git Repos"
     GEM_REPOS.each do |repo|
       spec = spec(repo)
-      sh "bundle config local.#{spec.name} --delete"
+      Dir.chdir(repo) do
+        sh "bundle config --delete local.#{spec.name}"
+      end
     end
   end
   
