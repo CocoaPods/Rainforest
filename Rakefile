@@ -524,10 +524,10 @@ def repos
 end
 
 # @return [Array<String>] All the directories that contains a Rakefile,
-#         except those in TEMPLATE_REPOS which should be excluded
+#         except those in TEMPLATE_REPOS, which should be excluded
 #
 def rakefile_repos
-  Dir['*/Rakefile'].map { |file| File.dirname(file) }
+  Dir['*/Rakefile'].map { |file| File.dirname(file) } - TEMPLATE_REPOS
 end
 
 # @return [Array<String>]
