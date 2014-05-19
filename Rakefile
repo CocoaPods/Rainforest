@@ -116,33 +116,29 @@ begin
 
   # Task pull
   #-----------------------------------------------------------------------------#
-
+  
   desc "Pulls all the repositories & updates their submodules"
   task :pull do
     title "Pulling all the repositories"
-    subtitle "Pulling Rainforest"
-    sh "git pull --no-commit"
-
-    updated_repos = []
-    repos.each do |dir|
-      Dir.chdir(dir) do
-        subtitle "Pulling #{dir}"
-        sh "git remote update"
-        status = `git status -uno`
-        unless status.include?('up-to-date') || status.include?('ahead')
-          updated_repos << dir
-          sh "git pull --no-commit"
-          sh "git submodule update"
+    if pull_current_repo(false)
+       puts "[!] The Rainforest repository itself has been updated.\n" \
+            'You should run `rake pull` again to pull the rest of the repositories.'
+    else
+      updated_repos = []
+      repos.each do |dir|
+        Dir.chdir(dir) do
+          updated = pull_current_repo(true)
+          updated_repos << dir if updated
         end
       end
-    end
 
-    unless updated_repos.empty?
-      title "Summary"
-      updated_repos.each do |dir|
-        subtitle dir
-        Dir.chdir(dir) do
-          puts `git log ORIG_HEAD..`
+      unless updated_repos.empty?
+        title "Summary"
+        updated_repos.each do |dir|
+          subtitle dir
+          Dir.chdir(dir) do
+            puts `git log ORIG_HEAD..`
+          end
         end
       end
     end
@@ -468,6 +464,25 @@ def clone_repos(repos)
       sh "git clone #{url}"
     end
   end
+end
+
+# Pull the repo in the current working directory
+# 
+# @param [Bool] Whether we want to update the submodules as well
+#
+# @return [Bool] true if the repo has updates that were pulled
+#                false if there was nothing to update (repo already up-to-date or ahead)
+#
+def pull_current_repo(update_submodules)
+  subtitle "Pulling #{File.basename(Dir.getwd)}"
+  sh "git remote update"
+  status = `git status -uno`
+  unless status.include?('up-to-date') || status.include?('ahead')
+    sh "git pull --no-commit"
+    sh "git submodule update" if update_submodules
+    return true
+  end
+  false
 end
 
 # Checks the given repo for a release and fails the task if any issue exits
