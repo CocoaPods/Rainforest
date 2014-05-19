@@ -121,8 +121,8 @@ begin
   task :pull do
     title "Pulling all the repositories"
     if pull_current_repo(false)
-       puts "[!] The Rainforest repository itself has been updated.\n" \
-            'You should run `rake pull` again to pull the rest of the repositories.'
+       puts yellow("\n[!] The Rainforest repository itself has been updated.\n" \
+            'You should run `rake pull` again to pull the rest of the repositories.')
     else
       updated_repos = []
       repos.each do |dir|
