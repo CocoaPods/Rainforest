@@ -16,6 +16,7 @@ GEM_REPOS = %w[
   cocoapods-plugins
   cocoapods-podfile_info
   cocoapods-try
+  cocoapods-trunk
 ]
 
 # @return [Array<String>] The list of the repos contains "template" contents
@@ -56,30 +57,30 @@ end
 
 
 begin
-  
+
   # Task clone
   #-----------------------------------------------------------------------------#
-  
+
   desc "Clones the GEM repositories"
   task :clone do
     repos = fetch_default_repos
     title "Cloning the GEM repositories"
     clone_repos(repos)
   end
-  
+
   # Task clone_all
   #-----------------------------------------------------------------------------#
-  
+
   desc "Clones ALL the CocoaPods repositories"
   task :clone_all do
     repos = fetch_repos
     title "Cloning gem repositories"
     clone_repos(repos)
   end
-  
+
   # Task bootstrap_repos
   #-----------------------------------------------------------------------------#
-  
+
   desc "Runs the Bootstrap task on all the repositories"
   task :bootstrap_repos do
     title "Bootstrapping all the repositories"
@@ -91,14 +92,14 @@ begin
         end
       end
     end
-  
+
     disk_usage = `du -h -c -d 0`.split(' ').first
     puts "\nDisk usage: #{disk_usage}"
   end
-  
+
   # Task switch_to_ssh
   #-----------------------------------------------------------------------------#
-  
+
   desc "Points the origin remote of all the git repos to use the SSH URL"
   task :switch_to_ssh do
     repos = fetch_default_repos
@@ -112,16 +113,16 @@ begin
       end
     end
   end
-  
+
   # Task pull
   #-----------------------------------------------------------------------------#
-  
+
   desc "Pulls all the repositories & updates their submodules"
   task :pull do
     title "Pulling all the repositories"
     subtitle "Pulling Rainforest"
     sh "git pull --no-commit"
-  
+
     updated_repos = []
     repos.each do |dir|
       Dir.chdir(dir) do
@@ -135,7 +136,7 @@ begin
         end
       end
     end
-  
+
     unless updated_repos.empty?
       title "Summary"
       updated_repos.each do |dir|
@@ -146,19 +147,19 @@ begin
       end
     end
   end
-  
+
   desc "Gets the count of the open issues"
   task :issues do
     require 'open-uri'
     require 'json'
-  
+
     title 'Fetching open issues'
     GEM_REPOS.each do |name|
       url = "https://api.github.com/repos/CocoaPods/#{name}/issues?state=open&per_page=100"
       response = open(url).read
       issues = JSON.parse(response)
       next if issues.empty?
-  
+
       pull_requests = issues.select { |issue| issue.has_key?('pull_request') }
       subtitle name
       if issues.count == 100
@@ -166,16 +167,16 @@ begin
       else
         puts "#{issues.count} open issues"
       end
-  
+
       unless pull_requests.empty?
         puts "#{pull_requests.count} pull requests"
       end
     end
   end
-  
+
   # Task local_dependencies_set
   #-----------------------------------------------------------------------------#
-  
+
   desc "Configure the repositories to use their dependencies from the rainforest (Bundler Local Git Repos feature)"
   task :local_dependencies_set do
     title "Setting up Bundler's Local Git Repos"
@@ -183,7 +184,7 @@ begin
       spec = spec(repo)
       sh "bundle config local.#{spec.name} ./#{repo}"
     end
-  
+
     subtitle "Building Xcodeproj native extensions"
     puts "NOTE: This step needs to be performed every-time the extension are" \
       " modified."
@@ -191,10 +192,10 @@ begin
       sh "rake ext:cleanbuild"
     end
   end
-  
+
   # Task local_dependencies_unset
   #-----------------------------------------------------------------------------#
-  
+
   desc "Configure the repositories to use their dependencies from the git remotes"
   task :local_dependencies_unset do
     title "Setting up Bundler's Local Git Repos"
@@ -205,26 +206,26 @@ begin
       end
     end
   end
-  
+
   # Task status
   #-----------------------------------------------------------------------------#
-  
+
   desc "Prints the repositories with un-merged branches or a dirty working copy and lists the gems with commits after the last release."
   task :status do
     title "Checking status"
-  
+
     dirs_not_in_master = repos.reject do |dir|
       Dir.chdir(dir) do
         branch = `git rev-parse --abbrev-ref HEAD`.chomp
         ['master', 'develop'].include?(branch)
       end
     end
-  
+
     unless dirs_not_in_master.empty?
       subtitle "Repositories not in master/develop branch"
       puts "- #{dirs_not_in_master.join("\n- ")}"
     end
-  
+
     dirs_with_unmerged_branches = repos.map do |dir|
       Dir.chdir(dir) do
         base_branch = default_branch
@@ -234,12 +235,12 @@ begin
         end
       end
     end.compact
-  
+
     unless dirs_with_unmerged_branches.empty?
       subtitle "Repositories with un-merged branches"
       puts "- #{dirs_with_unmerged_branches.join("\n- ")}"
     end
-  
+
     dirty_dirs = repos.reject do |dir|
       Dir.chdir(dir) do
         `git diff --quiet`
@@ -249,12 +250,12 @@ begin
         exit_status.zero? && cached_exit_status.zero?
       end
     end
-  
+
     unless dirty_dirs.empty?
       subtitle "Repositories with a dirty working copy"
       puts "- #{dirty_dirs.join("\n- ")}"
     end
-  
+
     subtitle "Gems with releases"
     has_pending_releases = false
     name_commits_tags = gem_dirs.map do |dir|
@@ -273,15 +274,15 @@ begin
     name_commits_tags.each do |name_commits_tag|
       puts "\n- #{name_commits_tag[0]}\n  #{name_commits_tag[1]} commits since #{name_commits_tag[2]}"
     end
-  
+
     unless has_pending_releases
       puts "All the gems are up to date"
     end
   end
-  
+
   # Task clean-up
   #-----------------------------------------------------------------------------#
-  
+
   desc "Performs safe clean-up operations"
   task :cleanup do
     title "Cleaning up"
@@ -305,16 +306,16 @@ begin
         end
       end
     end
-  
+
     unless cleaned
       puts "Nothing to clean"
     end
   end
-  
-  
+
+
   # Task versions
   #-----------------------------------------------------------------------------#
-  
+
   desc "Prints the last released version of every gem"
   task :versions do
     title "Printing versions"
@@ -328,10 +329,10 @@ begin
       end
     end
   end
-  
+
   # Task Release
   #-----------------------------------------------------------------------------#
-  
+
   # The pre_release and post_release tasks are called in the Rakefiles of the
   # gems.
   #
@@ -345,12 +346,12 @@ begin
   task :release, :gem_dir do |t, args|
     require 'pathname'
     require 'date'
-  
+
     unless ENV["BUNDLE_GEMFILE"].nil?
       error("This task is not supported under bundle exec")
       exit 1
     end
-  
+
     gem_dir = Pathname(args[:gem_dir])
     gem_name = gem_name(gem_dir)
     gem_version = gem_version(gem_dir)
@@ -360,38 +361,38 @@ begin
       print "You are about to release `#{gem_version}`, is that correct? [y/n] "
       exit 1 if $stdin.gets.strip.downcase != 'y'
     end
-  
+
     Dir.chdir(gem_dir) do
       subtitle "Updating the repo"
       sh 'git pull'
-  
+
       subtitle "Running specs"
       sh 'bundle exec rake spec'
-  
+
       if has_rake_task?('pre_release')
         subtitle "Running pre-release task"
         sh 'rake pre_release'
       end
-  
+
       subtitle "Building the Gem"
       sh 'rake build'
-  
+
       subtitle "Testing gem installation (tmp/gems)"
       gem_filename = Pathname('pkg') + "#{gem_name}-#{gem_version}.gem"
       tmp = File.expand_path('../tmp', __FILE__)
       tmp_gems = File.join(tmp, 'gems')
       silent_sh "rm -rf '#{tmp}'"
       sh "gem install --install-dir='#{tmp_gems}' #{gem_filename}"
-  
+
       subtitle "Commiting, tagging & Pushing"
       sh "git commit -a -m 'Release #{gem_version}'"
       sh "git tag -a #{gem_version} -m 'Release #{gem_version}'"
       sh "git push origin master"
       sh "git push origin --tags"
-  
+
       subtitle "Releasing the Gem"
       sh "gem push #{gem_filename}"
-  
+
       if has_rake_task?('post_release')
         subtitle "Running post_release task"
         sh 'rake post_release'
