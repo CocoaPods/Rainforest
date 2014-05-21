@@ -392,6 +392,8 @@ begin
         sh 'rake post_release'
       end
     end
+
+    `open https://rubygems.org/gems/#{gem_name}`
   end
 
 rescue LoadError
