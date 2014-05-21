@@ -330,11 +330,8 @@ begin
   # Task Release
   #-----------------------------------------------------------------------------#
 
-  # The pre_release and post_release tasks are called in the Rakefiles of the
-  # gems.
-  #
-  # FEATURES:
-  # - Dependencies are checked through the installation of the gem.
+  # For the documentation of the release process see
+  # https://github.com/CocoaPods/Rainforest/wiki
   #
   # TODO:
   # - Should the bundles be updated?
