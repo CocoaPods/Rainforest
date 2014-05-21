@@ -330,13 +330,10 @@ begin
   # Task Release
   #-----------------------------------------------------------------------------#
 
-  # For the documentation of the release process see
-  # https://github.com/CocoaPods/Rainforest/wiki
-  #
   # TODO:
   # - Should the bundles be updated?
   #
-  desc "Run all specs, build and install gem, commit version change, tag version change, and push everything"
+  desc "Releases a gem: https://github.com/CocoaPods/Rainforest/wiki"
   task :release, :gem_dir do |t, args|
     require 'pathname'
     require 'date'
