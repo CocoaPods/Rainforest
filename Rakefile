@@ -122,7 +122,7 @@ begin
     title "Pulling all the repositories"
     if pull_current_repo(false)
        puts yellow("\n[!] The Rainforest repository itself has been updated.\n" \
-            'You should run `rake bootstrap` to update all repositories\n' \
+            "You should run `rake bootstrap` to update all repositories\n" \
             'and fetch the potentially new ones.')
     else
       updated_repos = []
