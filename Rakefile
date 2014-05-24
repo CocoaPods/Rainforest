@@ -151,7 +151,7 @@ begin
     require 'json'
 
     title 'Fetching open issues'
-    GEM_REPOS.each do |name|
+      %w(Rainforest).concat(GEM_REPOS).each do |name|
       url = "https://api.github.com/repos/CocoaPods/#{name}/issues?state=open&per_page=100"
       response = open(url).read
       issues = JSON.parse(response)
