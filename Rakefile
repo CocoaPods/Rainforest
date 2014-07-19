@@ -88,7 +88,7 @@ begin
       Dir.chdir(dir) do
         subtitle "Bootstrapping #{dir}"
         if has_rake_task?('bootstrap')
-          sh "rake --no-search bootstrap"
+          sh "env ARCHFLAGS=-Wno-error=unused-command-line-argument-hard-error-in-future rake --no-search bootstrap"
         end
       end
     end
