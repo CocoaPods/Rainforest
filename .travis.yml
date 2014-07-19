@@ -1,6 +1,6 @@
-language: ruby
-rvm:
-  - 1.8.7
-  - 2.0.0
+language: objective-c
+
+env:
+  - RVM_RUBY_VERSION=system
 
 script: rake bootstrap
