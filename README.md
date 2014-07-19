@@ -1,6 +1,7 @@
 # CocoaPods Rainforest
 
-[![Build Status](https://img.shields.io/travis/CocoaPods/Rainforest/master.svg?style=flat
+[![Build Status](https://img.shields.io/travis/CocoaPods/Rainforest/master.svg?style=flat)](https://travis-ci.org/CocoaPods/Rainforest)
+
 
 To effectively farm CocoaPods, trees are needed (the gems), and those trees need
 a special and unique habitat to flourish: the Rainforest.
