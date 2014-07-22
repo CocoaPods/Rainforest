@@ -160,13 +160,17 @@ begin
       pull_requests = issues.select { |issue| issue.has_key?('pull_request') }
       subtitle name
       if issues.count == 100
-        puts "100 or more open issues"
+        puts yellow("100 or more open issues")
       else
-        puts "#{issues.count} open issues"
+        puts yellow("#{issues.count} open issues")
+      end
+
+      if issues.count <= 5
+        puts issues.map{ |i| "- " + i['title'] }
       end
 
       unless pull_requests.empty?
-        puts "#{pull_requests.count} pull requests"
+        puts yellow("#{pull_requests.count} pull requests")
       end
     end
   end
