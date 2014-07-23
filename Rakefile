@@ -185,13 +185,6 @@ begin
       spec = spec(repo)
       sh "bundle config local.#{spec.name} ./#{repo}"
     end
-
-    subtitle "Building Xcodeproj native extensions"
-    puts "NOTE: This step needs to be performed every-time the extension are" \
-      " modified."
-    Dir.chdir('Xcodeproj') do
-      sh "rake ext:cleanbuild"
-    end
   end
 
   # Task local_dependencies_unset
