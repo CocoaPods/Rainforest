@@ -151,26 +151,30 @@ begin
     require 'json'
 
     title 'Fetching open issues'
-      %w(Rainforest).concat(GEM_REPOS).each do |name|
+    GEM_REPOS.dup.push('Rainforest').each do |name|
       url = "https://api.github.com/repos/CocoaPods/#{name}/issues?state=open&per_page=100"
       response = open(url).read
       issues = JSON.parse(response)
       next if issues.empty?
 
+      pure_issues = issues.reject { |issue| issue.has_key?('pull_request') }
       pull_requests = issues.select { |issue| issue.has_key?('pull_request') }
       subtitle name
-      if issues.count == 100
-        puts yellow("100 or more open issues")
-      else
-        puts yellow("#{issues.count} open issues")
-      end
-
-      if issues.count <= 5
-        puts issues.map{ |i| "- " + i['title'] }
-      end
 
       unless pull_requests.empty?
         puts yellow("#{pull_requests.count} pull requests")
+        if pull_requests.count <= 5
+          puts pull_requests.map{ |i| "- " + i['title'] }
+        end
+      end
+
+      if issues.count == 100
+        puts yellow("100 or more open issues")
+      else
+        puts yellow("#{pure_issues.count} open issues")
+        if pure_issues.count <= 5
+          puts pure_issues.map{ |i| "- " + i['title'] }
+        end
       end
     end
   end
