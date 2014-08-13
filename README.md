@@ -57,8 +57,9 @@ $ rake -T
 - `rake pull`: Pulls all the repos and updates the submodules.
 - `rake cleanup`: Performs safe cleanup operations, like deleting merged
   branches.
-- `rake status`: Prints the repositories with unmerged branches or a dirty
+- `rake status`: Prints the repositories with unmerged branches or a dirty.
   working copy and lists the gems with commits after the last release.
+- `rake issues`: Gets the count of the open issues.
 
 ### Tasks for the Core team
 
@@ -66,6 +67,9 @@ $ rake -T
 - `rake switch_to_ssh`: If SSH is your fancy.
 - `rake issues`: Prints the count of the open issues for each gem.
 - `rake release[gem_dir]`: Releases the gem with the given name.
+- `update_rubocop_configuration[gem_dir]`: Update the shared CocoaPods RuboCop
+  configuration for the given repo or for all the repos.
+
 
 ## Collaborate
 
