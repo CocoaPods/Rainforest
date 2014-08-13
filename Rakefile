@@ -116,7 +116,7 @@ begin
 
   # Task pull
   #-----------------------------------------------------------------------------#
-  
+
   desc "Pulls all the repositories & updates their submodules"
   task :pull do
     title "Pulling all the repositories"
@@ -394,6 +394,40 @@ begin
     `open https://rubygems.org/gems/#{gem_name}`
   end
 
+  # Task Update RuboCop configuration
+  #-----------------------------------------------------------------------------#
+
+  desc "Update the shared CocoaPods RuboCop configuration for the given repo or for all the repos"
+  task :update_rubocop_configuration, :gem_dir do |t, args|
+    repo = {
+      'name' => 'shared',
+      'clone_url' => 'https://github.com/CocoaPods/shared.git'
+    }
+    clone_repos([repo]) unless File.exist?('shared')
+
+    if args[:gem_dir]
+      dirs = [args[:gem_dir]]
+    else
+      dirs = gem_dirs
+    end
+
+    has_changes = false
+    dirs.each do |gem_dir|
+      FileUtils.cp('./shared/.rubocop-cocoapods.yml', gem_dir)
+      Dir.chdir(gem_dir) do
+        diff_lines = `git diff --name-only`.strip.split("\n")
+        if diff_lines.include?('.rubocop-cocoapods.yml')
+          puts green("- #{gem_dir}")
+          has_changes = true
+        end
+      end
+    end
+
+    if has_changes
+      puts "\nCommit manually to the above repos"
+    end
+  end
+
 rescue LoadError
   $stderr.puts "\033[0;31m" \
     '[!] Some Rake tasks haven been disabled because the environment' \
@@ -465,7 +499,7 @@ def clone_repos(repos)
 end
 
 # Pull the repo in the current working directory
-# 
+#
 # @param [Bool] Whether we want to update the submodules as well
 #
 # @return [Bool] true if the repo has updates that were pulled
