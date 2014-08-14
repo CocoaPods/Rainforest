@@ -413,7 +413,7 @@ begin
 
     has_changes = false
     dirs.each do |gem_dir|
-      FileUtils.cp('./shared/.rubocop-cocoapods.yml', gem_dir)
+      FileUtils.cp('./shared/.rubocop_cocoapods.yml', gem_dir)
       Dir.chdir(gem_dir) do
         diff_lines = `git diff --name-only`.strip.split("\n")
         if diff_lines.include?('.rubocop-cocoapods.yml')
