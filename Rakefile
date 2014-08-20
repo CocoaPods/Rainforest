@@ -10,11 +10,9 @@ GEM_REPOS = %w[
   Core
   Xcodeproj
   CLAide
-  VersionKit
   cocoapods-docs
   cocoapods-downloader
   cocoapods-plugins
-  cocoapods-podfile_info
   cocoapods-try
   cocoapods-trunk
 ]
@@ -427,6 +425,23 @@ begin
       puts "\nCommit manually to the above repos"
     end
   end
+
+
+  #-- Spec -------------------------------------------------------------------#
+
+  desc "Run all specs of all the gems"
+  task :spec do
+    title "Running specs"
+    GEM_REPOS.reverse.each do |repo|
+      spec = spec(repo)
+      Dir.chdir(repo) do
+        subtitle repo
+        sh 'bundle exec rake spec'
+      end
+    end
+  end
+
+
 
 rescue LoadError
   $stderr.puts "\033[0;31m" \
