@@ -581,9 +581,7 @@ end
 # @return [Array<String>] All the checked out repos
 #
 def repos
-  result = Dir['*/'].map { |dir| dir[0...-1] }
-  # TODO get rid of the extension dir
-  result.reject{ |repo| repo == 'extensions' }
+  Dir['*/'].map { |dir| dir[0...-1] }
 end
 
 # @return [Array<String>] All the directories that contains a Rakefile,
