@@ -1,3 +1,4 @@
+#encoding: utf-8 
 
 # @return [Array<String>] The list of the names of the CocoaPods repositories
 #         which store a gem or are related to the development of the gems.
