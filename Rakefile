@@ -372,11 +372,11 @@ begin
 
       if has_rake_task?('pre_release')
         subtitle "Running pre-release task"
-        sh 'rake pre_release'
+        sh 'bundle exec rake pre_release'
       end
 
       subtitle "Building the Gem"
-      sh 'rake build'
+      sh 'bundle exec rake build'
 
       subtitle "Testing gem installation (tmp/gems)"
       gem_filename = Pathname('pkg') + "#{gem_name}-#{gem_version}.gem"
@@ -396,7 +396,7 @@ begin
 
       if has_rake_task?('post_release')
         subtitle "Running post_release task"
-        sh 'rake post_release'
+        sh 'bundle exec rake post_release'
       end
     end
 
