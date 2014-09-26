@@ -153,23 +153,34 @@ begin
       url = "https://api.github.com/repos/CocoaPods/#{name}/issues?state=open&per_page=100"
       response = open(url).read
       issues = JSON.parse(response)
-      next if issues.empty?
 
       pure_issues = issues.reject { |issue| issue.has_key?('pull_request') }
       pull_requests = issues.select { |issue| issue.has_key?('pull_request') }
-      subtitle name
+      puts cyan("\n#{name}")
 
-      unless pull_requests.empty?
-        puts yellow("#{pull_requests.count} pull requests")
-        if pull_requests.count <= 5
-          puts pull_requests.map{ |i| "- " + i['title'] }
-        end
-      end
-
-      if issues.count == 100
-        puts yellow("100 or more open issues")
+      if issues.empty?
+        puts green "Awesome no open issues"
       else
-        puts yellow("#{pure_issues.count} open issues")
+        unless pull_requests.empty?
+          if pull_requests.count == 1
+            puts yellow("1 pull request")
+          elsif pull_requests.count > 1
+            puts yellow("#{pull_requests.count} pull requests")
+          end
+
+          if pull_requests.count <= 5
+            puts pull_requests.map{ |i| "- " + i['title'] }
+          end
+        end
+
+        if pure_issues.count == 100
+          puts yellow("100 or more open issues")
+        elsif pure_issues.count == 1
+          puts yellow("1 open issue")
+        elsif pure_issues.count > 1
+          puts yellow("#{pure_issues.count} open issues")
+        end
+
         if pure_issues.count <= 5
           puts pure_issues.map{ |i| "- " + i['title'] }
         end
