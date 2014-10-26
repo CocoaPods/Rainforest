@@ -16,6 +16,7 @@ GEM_REPOS = %w[
   cocoapods-plugins
   cocoapods-try
   cocoapods-trunk
+  Molinillo
 ]
 
 # @return [Array<String>] The list of the repos contains "template" contents
