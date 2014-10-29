@@ -365,6 +365,15 @@ begin
       exit 1 if $stdin.gets.strip.downcase != 'y'
     end
 
+    if github_access_token = Pathname('.github_access_token').expand_path.read rescue nil
+      gem 'nap'
+      require 'rest'
+      require 'json'
+    else
+      error "You have not provided a github access token via `.github_access_token`, " \
+       'so a GitHub release cannot be made automatically.'
+    end
+
     Dir.chdir(gem_dir) do
       subtitle "Updating the repo"
       sh 'git pull'
@@ -400,6 +409,12 @@ begin
         subtitle "Running post_release task"
         sh 'rake post_release'
       end
+    end
+
+    if github_access_token
+      subtitle "Making GitHub release"
+      make_github_release(gem_dir, gem_version, gem_version.to_s)
+      `open https://github.com/CocoaPods/#{gem_dir}/releases/#{gem_version}`
     end
 
     `open https://rubygems.org/gems/#{gem_name}`
@@ -620,6 +635,48 @@ def default_branch
   end
 end
 
+def make_github_release(repo, version, tag, access_token)
+  body = changelog_for_repo(repo, version)
+
+  REST.post("https://api.github.com/repos/CocoaPods/#{repo}/releases",
+    {
+      tag_name: tag,
+      name: version.to_s,
+      body: body,
+      prerelease: version.prerelease?,
+    }.to_json,
+    {
+      'Content-Type' => 'application/json',
+      'User-Agent' => 'runscope/0.1,segiddins',
+      'Accept' => '*/*',
+      'Accept-Encoding' => 'gzip, deflate',
+      'Authorizaton' => "token #{access_token}",
+    },
+  )
+end
+
+def changelog_for_repo(repo, version)
+  changelog_path = File.expand_path(repo + '/CHANGELOG.md')
+  if File.exists?(changelog_path)
+    title_token = '## '
+    current_verison_title = title_token +  version.to_s
+    text = File.open(changelog_path, "r:UTF-8") { |f| f.read }
+    lines = text.split("\n")
+
+    current_version_index = lines.find_index { |line| line =~ (/^#{current_verison_title}/) }
+    unless current_version_index
+      raise "Update the changelog for the last version (#{version})"
+    end
+    current_version_index += 1
+    previous_version_lines = lines[(current_version_index+1)...-1]
+    previous_version_index = current_version_index + (previous_version_lines.find_index { |line| line =~ (/^#{title_token}/) && !line.include?('rc') } || lines.count)
+
+    relevant = lines[current_version_index..previous_version_index]
+
+    relevant.join("\n").strip
+  end
+end
+
 # Gem Helpers
 #-----------------------------------------------------------------------------#
 
@@ -716,4 +773,3 @@ end
 def cyan(string)
   "\033[0;36m#{string}\033[0m"
 end
-
