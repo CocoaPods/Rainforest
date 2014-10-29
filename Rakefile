@@ -638,7 +638,7 @@ end
 def make_github_release(repo, version, tag, access_token)
   body = changelog_for_repo(repo, version)
 
-  REST.post("https://api.github.com/repos/CocoaPods/#{repo}/releases?access_token=#{access_token}",
+  REST.post("https://api.github.com/repos/CocoaPods/#{repo}/releases",
     {
       tag_name: tag,
       name: version.to_s,
@@ -649,8 +649,9 @@ def make_github_release(repo, version, tag, access_token)
       'Content-Type' => 'application/json',
       'User-Agent' => 'runscope/0.1,segiddins',
       'Accept' => '*/*',
-      'Accept-Encoding' => 'gzip, deflate'
-    }
+      'Accept-Encoding' => 'gzip, deflate',
+      'Authorizaton' => "token #{access_token}",
+    },
   )
 end
 
