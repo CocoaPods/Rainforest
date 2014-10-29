@@ -365,7 +365,7 @@ begin
       exit 1 if $stdin.gets.strip.downcase != 'y'
     end
 
-    if github_access_token = Pathname('.github_access_token') rescue nil
+    if github_access_token = Pathname('.github_access_token').expand_path.read rescue nil
       gem 'nap'
       require 'rest'
       require 'json'
