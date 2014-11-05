@@ -365,7 +365,7 @@ begin
       exit 1 if $stdin.gets.strip.downcase != 'y'
     end
 
-    if github_access_token = Pathname('.github_access_token').expand_path.read rescue nil
+    if github_access_token = Pathname('.github_access_token').expand_path.read.strip rescue nil
       gem 'nap'
       require 'rest'
       require 'json'
@@ -638,7 +638,7 @@ end
 def make_github_release(repo, version, tag, access_token)
   body = changelog_for_repo(repo, version)
 
-  REST.post("https://api.github.com/repos/CocoaPods/#{repo}/releases",
+  REST.post("https://api.github.com/repos/CocoaPods/#{repo}/releases?access_token=#{access_token}",
     {
       tag_name: tag,
       name: version.to_s,
@@ -650,7 +650,6 @@ def make_github_release(repo, version, tag, access_token)
       'User-Agent' => 'runscope/0.1,segiddins',
       'Accept' => '*/*',
       'Accept-Encoding' => 'gzip, deflate',
-      'Authorizaton' => "token #{access_token}",
     },
   )
 end
