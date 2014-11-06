@@ -712,7 +712,7 @@ end
 # Other Helpers
 #-----------------------------------------------------------------------------#
 
-# @return [Bool] Wether the Rakefile in the current working directory has a
+# @return [Bool] Whether the Rakefile in the current working directory has a
 #         task with the given name.
 #
 def has_rake_task?(task)
