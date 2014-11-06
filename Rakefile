@@ -376,7 +376,7 @@ begin
 
     Dir.chdir(gem_dir) do
       subtitle "Updating the repo"
-      sh 'git pull'
+      sh 'git pull --no-rebase'
 
       subtitle "Running specs"
       sh 'bundle exec rake spec'
