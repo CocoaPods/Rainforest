@@ -413,6 +413,7 @@ begin
 
     if github_access_token
       subtitle "Making GitHub release"
+      sleep 5
       make_github_release(gem_dir, gem_version, gem_version.to_s, github_access_token)
       `open https://github.com/CocoaPods/#{gem_dir}/releases/#{gem_version}`
     end
