@@ -349,6 +349,7 @@ begin
   task :release, :gem_dir do |t, args|
     require 'pathname'
     require 'date'
+    require_relative './gemfile_cleaner'
 
     unless ENV["BUNDLE_GEMFILE"].nil?
       error("This task is not supported under bundle exec")
@@ -378,8 +379,10 @@ begin
       subtitle "Updating the repo"
       sh 'git pull --no-rebase'
 
-      subtitle "Running specs"
-      sh 'bundle exec rake spec'
+      GemfileCleaner.in_released_bundle do
+        subtitle "Running specs"
+        sh 'bundle exec rake spec'
+      end
 
       if has_rake_task?('pre_release')
         subtitle "Running pre-release task"
