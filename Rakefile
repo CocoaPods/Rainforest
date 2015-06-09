@@ -14,6 +14,7 @@ GEM_REPOS = %w[
   cocoapods-docs
   cocoapods-downloader
   cocoapods-plugins
+  cocoapods-stats
   cocoapods-try
   cocoapods-trunk
   Molinillo
