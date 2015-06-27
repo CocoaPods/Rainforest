@@ -571,8 +571,8 @@ end
 def check_repo_for_release(repo_dir, version)
   errors = []
   Dir.chdir(repo_dir) do
-    if `git symbolic-ref HEAD 2>/dev/null`.strip.split('/').last != 'master'
-      errors << "You need to be on the `master` branch in order to do a release."
+    if `git symbolic-ref HEAD 2>/dev/null`.strip.split('/').last !~ /(\Amaster)|(-stable)\Z/
+      errors << "You need to be on the `master` branch or a `stable` branch in order to do a release."
     end
 
     if `git tag`.strip.split("\n").include?(version.to_s)
