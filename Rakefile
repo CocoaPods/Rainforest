@@ -415,7 +415,6 @@ begin
 
     if github_access_token
       subtitle "Making GitHub release"
-      sleep 5
       make_github_release(gem_dir, gem_version, gem_version.to_s, github_access_token)
       `open https://github.com/CocoaPods/#{gem_dir}/releases/#{gem_version}`
     end
@@ -658,20 +657,23 @@ def make_github_release(repo, version, tag, access_token)
 end
 
 def changelog_for_repo(repo, version)
-  changelog_path = File.expand_path(repo + '/CHANGELOG.md')
+  changelog_path = File.expand_path('CHANGELOG.md', repo)
   if File.exists?(changelog_path)
     title_token = '## '
-    current_verison_title = title_token +  version.to_s
+    current_verison_title = title_token + version.to_s
     text = File.open(changelog_path, "r:UTF-8") { |f| f.read }
     lines = text.split("\n")
 
-    current_version_index = lines.find_index { |line| line =~ (/^#{current_verison_title}/) }
+    current_version_index = lines.find_index { |line| line.strip == current_verison_title }
     unless current_version_index
       raise "Update the changelog for the last version (#{version})"
     end
     current_version_index += 1
     previous_version_lines = lines[(current_version_index+1)...-1]
-    previous_version_index = current_version_index + (previous_version_lines.find_index { |line| line =~ (/^#{title_token}/) && !line.include?('rc') } || lines.count)
+    previous_version_index = current_version_index + (
+      previous_version_lines.find_index { |line| line.start_with?(title_token) && !%w(rc beta).any? { |pre| line.include?(pre) } } ||
+      lines.count
+    )
 
     relevant = lines[current_version_index..previous_version_index]
 
