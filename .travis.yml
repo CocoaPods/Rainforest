@@ -1,5 +1,8 @@
 language: objective-c
 
+install:
+  - gem install bundler -v ">= 1.10"
+
 env:
   - RVM_RUBY_VERSION=system
 
