@@ -383,6 +383,11 @@ begin
       subtitle "Running specs"
       sh 'bundle exec rake spec'
 
+      subtitle "Adding release date to CHANGELOG"
+      changelog = File.read("CHANGELOG.md")
+      changelog.sub("## #{gem_version}\n") { |s| "## #{gem_version} (" << Time.now.utc.strftime('%F') << ")\n" }
+      File.open('CHANGELOG.md',  'w') { |f| f << changelog }
+
       if has_rake_task?('pre_release')
         subtitle "Running pre-release task"
         sh 'bundle exec rake pre_release'
@@ -664,7 +669,7 @@ def changelog_for_repo(repo, version)
     text = File.open(changelog_path, "r:UTF-8") { |f| f.read }
     lines = text.split("\n")
 
-    current_version_index = lines.find_index { |line| line.strip == current_verison_title }
+    current_version_index = lines.find_index { |line| line.strip =~ /^#{current_verison_title}($|\b)/ }
     unless current_version_index
       raise "Update the changelog for the last version (#{version})"
     end
