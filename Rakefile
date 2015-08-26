@@ -385,7 +385,7 @@ begin
 
       subtitle "Adding release date to CHANGELOG"
       changelog = File.read("CHANGELOG.md")
-      changelog.sub("## #{gem_version}\n") { |s| "## #{gem_version} (" << Time.now.utc.strftime('%F') << ")\n" }
+      changelog.sub!("## #{gem_version}\n") { |s| "## #{gem_version} (" << Time.now.utc.strftime('%F') << ")\n" }
       File.open('CHANGELOG.md',  'w') { |f| f << changelog }
 
       if has_rake_task?('pre_release')
