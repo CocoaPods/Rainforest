@@ -393,6 +393,9 @@ begin
         sh 'bundle exec rake pre_release'
       end
 
+      subtitle "Validating the gemspec"
+      validate_spec(spec('.'))
+
       subtitle "Building the Gem"
       sh 'bundle exec rake build'
 
@@ -703,6 +706,21 @@ def spec(gem_dir)
   end
   spec_path = files.first
   spec = Gem::Specification::load(spec_path.to_s)
+end
+
+def validate_spec(spec)
+  spec = spec.dup
+  Dir.chdir(File.dirname spec.loaded_from) do
+    def spec.alert_warning(warning)
+      return if warning =~ /prerelease dependency/
+      (@warning_messages ||= []) << warning
+    end
+    spec.validate(false)
+    warnings = spec.instance_variable_get(:@warning_messages)
+    if !warnings.empty?
+      error "'#{spec.name}' failed to validate due to warnings:\n" << warnings.join("\n")
+    end
+  end
 end
 
 def gem_version(gem_dir)
