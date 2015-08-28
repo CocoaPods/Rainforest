@@ -380,6 +380,8 @@ begin
       subtitle "Updating the repo"
       sh 'git pull --no-rebase'
 
+      sh "git ls-files -z | xargs -0 chmod -R ugo+r"
+
       subtitle "Running specs"
       sh 'bundle exec rake spec'
 
