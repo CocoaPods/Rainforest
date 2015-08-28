@@ -713,6 +713,11 @@ def validate_spec(spec)
   Dir.chdir(File.dirname spec.loaded_from) do
     def spec.alert_warning(warning)
       return if warning =~ /prerelease dependency/
+      return if warning =~ /no description specified/
+      return if warning =~ %r{See http://guides.rubygems.org/specification-reference/ for help}
+      return if warning =~ /no email specified/
+      return if warning =~ /open-ended dependency/
+      return if warning =~ /pessimistic dependency on .* overly strict/
       (@warning_messages ||= []) << warning
     end
     spec.validate(false)
