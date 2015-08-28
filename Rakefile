@@ -717,8 +717,8 @@ def validate_spec(spec)
     end
     spec.validate(false)
     warnings = spec.instance_variable_get(:@warning_messages)
-    if !warnings.empty?
-      error "'#{spec.name}' failed to validate due to warnings:\n" << warnings.join("\n")
+    if warnings && !warnings.empty?
+      error "'#{spec.name}' failed to validate due to warnings:\n\n" << warnings.join("\n")
     end
   end
 end
