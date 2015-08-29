@@ -18,7 +18,7 @@ GEM_REPOS = %w[
   cocoapods-stats
   cocoapods-try
   cocoapods-trunk
-  cocoapod-search
+  cocoapods-search
   Molinillo
 ]
 
