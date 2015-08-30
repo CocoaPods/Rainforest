@@ -345,6 +345,15 @@ begin
   # Task Release
   #-----------------------------------------------------------------------------#
 
+  desc "Add owners on RubyGems"
+  task :add_owners, :gem_name do |t, args|
+    gem_name = args[:gem_name]
+    owners = %w(segiddins@segiddins.me boris@buegling.com gems@mariusrackwitz.de)
+    owners.each do |owner|
+      sh "gem owner '#{gem_name}' -a '#{owner}'"
+    end
+  end
+
   # TODO:
   # - Should the bundles be updated?
   #
