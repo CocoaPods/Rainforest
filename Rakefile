@@ -12,6 +12,7 @@ GEM_REPOS = %w[
   Xcodeproj
   CLAide
   claide-completion
+  cocoapods-deintegrate
   cocoapods-docs
   cocoapods-downloader
   cocoapods-plugins
