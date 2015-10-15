@@ -154,7 +154,7 @@ begin
 
     title 'Fetching open issues'
     GEM_REPOS.dup.push('Rainforest').each do |name|
-      url = "https://api.github.com/repos/CocoaPods/#{name}/issues?state=open&per_page=100"
+      url = "https://api.github.com/repos/CocoaPods/#{name}/issues?state=open&per_page=100&#{github_access_token_query}"
       response = open(url).read
       issues = JSON.parse(response)
 
@@ -357,11 +357,7 @@ begin
       exit 1 if $stdin.gets.strip.downcase != 'y'
     end
 
-    if github_access_token = begin
-                               Pathname('.github_access_token').expand_path.read.strip
-                             rescue
-                               nil
-                             end
+    if github_access_token
       gem 'nap'
       require 'rest'
       require 'json'
@@ -499,7 +495,7 @@ def fetch_repos
   require 'json'
   require 'open-uri'
   title 'Fetching repositories list'
-  url = 'https://api.github.com/orgs/CocoaPods/repos?type=public'
+  url = "https://api.github.com/orgs/CocoaPods/repos?type=public&#{github_access_token_query}"
   repos = []
   loop do
     file = open(url)
@@ -672,6 +668,22 @@ def changelog_for_repo(repo, version)
     relevant = lines[current_version_index..previous_version_index]
 
     relevant.join("\n").strip
+  end
+end
+
+def github_access_token
+  begin
+    Pathname('.github_access_token').expand_path.read.strip
+  rescue
+    nil
+  end
+end
+
+def github_access_token_query
+  if token = github_access_token
+    "access_token=#{token}"
+  else
+    ''
   end
 end
 
