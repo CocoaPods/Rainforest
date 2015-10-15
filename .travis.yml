@@ -1,9 +1,10 @@
 language: objective-c
-
+pre_install:
+- echo "$GITHUB_ACCESS_TOKEN" > .github_access_token
 install:
-  - gem install bundler -v ">= 1.10"
-
+- gem install bundler -v ">= 1.10"
 env:
-  - RVM_RUBY_VERSION=system
-
+- RVM_RUBY_VERSION=system
 script: rake bootstrap
+GITHUB_ACCESS_TOKEN:
+  secure: ttITGgidBLW02YoJ9QYJqz4kl5TrnF9r0JCJifO83tduL/ubkfdwAQ/K8YOlR9Q4M3JMr+5VdxHMH9ANj96BPnwPxeePkETTd1J5243qW6jAeK4sIj14cBK+RlU+u8/sFjjW+7eI6JEsMUgv8yTX25ZJUu+HiZQn4qhC2YML0B4=
