@@ -6,23 +6,23 @@
 # @note   The order is from more important to less important and consequently
 #         the gems at the bottom are dependencies of the gems at the top.
 #
-GEM_REPOS = %w[
-  CocoaPods
-  Core
-  Xcodeproj
+GEM_REPOS = %w(
   CLAide
   claide-completion
+  CocoaPods
   cocoapods-deintegrate
   cocoapods-docs
   cocoapods-downloader
   cocoapods-plugins
-  cocoapods-stats
-  cocoapods-try
-  cocoapods-trunk
   cocoapods-search
-  Molinillo
+  cocoapods-stats
+  cocoapods-trunk
+  cocoapods-try
+  Core
   Cork
-]
+  Molinillo
+  Xcodeproj
+)
 
 # @return [Array<String>] The list of the repos contains "template" contents
 #         to be used as a model.
@@ -31,10 +31,10 @@ GEM_REPOS = %w[
 #       to avoid running `rake` on them, as their Rakefile are not intended
 #       to be used in-place in the repository, but only to serve as a model.
 #
-TEMPLATE_REPOS = %w[
+TEMPLATE_REPOS = %w(
   pod-template
   shared
-]
+)
 
 # @return [Array<String>] The list of the repos which should be cloned by
 #         default.
@@ -46,7 +46,7 @@ task :default => :status
 # Task bootstrap / set-up
 #-----------------------------------------------------------------------------#
 
-desc "Clones all the CocoaPods repositories"
+desc 'Clones all the CocoaPods repositories'
 task :bootstrap do
   if system('which bundle')
     Rake::Task[:clone].invoke
@@ -54,47 +54,44 @@ task :bootstrap do
   else
     $stderr.puts "\033[0;31m" \
       "[!] Please install the bundler gem manually:\n" \
-      "    $ [sudo] gem install bundler" \
+      '    $ [sudo] gem install bundler' \
       "\e[0m"
     exit 1
   end
 end
-
 
 begin
 
   # Task clone
   #-----------------------------------------------------------------------------#
 
-  desc "Clones the GEM repositories"
+  desc 'Clones the GEM repositories'
   task :clone do
     repos = fetch_default_repos
-    title "Cloning the GEM repositories"
+    title 'Cloning the GEM repositories'
     clone_repos(repos)
   end
 
   # Task clone_all
   #-----------------------------------------------------------------------------#
 
-  desc "Clones ALL the CocoaPods repositories"
+  desc 'Clones ALL the CocoaPods repositories'
   task :clone_all do
     repos = fetch_repos
-    title "Cloning gem repositories"
+    title 'Cloning gem repositories'
     clone_repos(repos)
   end
 
   # Task bootstrap_repos
   #-----------------------------------------------------------------------------#
 
-  desc "Runs the Bootstrap task on all the repositories"
+  desc 'Runs the Bootstrap task on all the repositories'
   task :bootstrap_repos do
-    title "Bootstrapping all the repositories"
+    title 'Bootstrapping all the repositories'
     rakefile_repos.each do |dir|
       Dir.chdir(dir) do
         subtitle "Bootstrapping #{dir}"
-        if has_rake_task?('bootstrap')
-          sh "rake --no-search bootstrap"
-        end
+        sh 'rake --no-search bootstrap' if rake_task?('bootstrap')
       end
     end
 
@@ -105,10 +102,10 @@ begin
   # Task switch_to_ssh
   #-----------------------------------------------------------------------------#
 
-  desc "Points the origin remote of all the git repos to use the SSH URL"
+  desc 'Points the origin remote of all the git repos to use the SSH URL'
   task :switch_to_ssh do
     repos = fetch_default_repos
-    title "Setting SSH URLs"
+    title 'Setting SSH URLs'
     repos.each do |repo|
       name = repo['name']
       url = repo['ssh_url']
@@ -122,13 +119,13 @@ begin
   # Task pull
   #-----------------------------------------------------------------------------#
 
-  desc "Pulls all the repositories & updates their submodules"
+  desc 'Pulls all the repositories & updates their submodules'
   task :pull do
-    title "Pulling all the repositories"
+    title 'Pulling all the repositories'
     if pull_current_repo(false)
-       puts yellow("\n[!] The Rainforest repository itself has been updated.\n" \
-            "You should run `rake bootstrap` to update all repositories\n" \
-            'and fetch the potentially new ones.')
+      puts yellow("\n[!] The Rainforest repository itself has been updated.\n" \
+           "You should run `rake bootstrap` to update all repositories\n" \
+           'and fetch the potentially new ones.')
     else
       updated_repos = []
       repos.each do |dir|
@@ -139,7 +136,7 @@ begin
       end
 
       unless updated_repos.empty?
-        title "Summary"
+        title 'Summary'
         updated_repos.each do |dir|
           subtitle dir
           Dir.chdir(dir) do
@@ -150,7 +147,7 @@ begin
     end
   end
 
-  desc "Gets the count of the open issues"
+  desc 'Gets the count of the open issues'
   task :issues do
     require 'open-uri'
     require 'json'
@@ -161,36 +158,34 @@ begin
       response = open(url).read
       issues = JSON.parse(response)
 
-      pure_issues = issues.reject { |issue| issue.has_key?('pull_request') }
-      pull_requests = issues.select { |issue| issue.has_key?('pull_request') }
+      pure_issues = issues.reject { |issue| issue.key?('pull_request') }
+      pull_requests = issues.select { |issue| issue.key?('pull_request') }
       puts cyan("\n#{name}")
 
       if issues.empty?
-        puts green "Awesome no open issues"
+        puts green 'Awesome no open issues'
       else
         unless pull_requests.empty?
           if pull_requests.count == 1
-            puts yellow("1 pull request")
+            puts yellow('1 pull request')
           elsif pull_requests.count > 1
             puts yellow("#{pull_requests.count} pull requests")
           end
 
           if pull_requests.count <= 5
-            puts pull_requests.map{ |i| "- " + i['title'] }
+            puts pull_requests.map { |i| '- ' + i['title'] }
           end
         end
 
         if pure_issues.count == 100
-          puts yellow("100 or more open issues")
+          puts yellow('100 or more open issues')
         elsif pure_issues.count == 1
-          puts yellow("1 open issue")
+          puts yellow('1 open issue')
         elsif pure_issues.count > 1
           puts yellow("#{pure_issues.count} open issues")
         end
 
-        if pure_issues.count <= 5
-          puts pure_issues.map{ |i| "- " + i['title'] }
-        end
+        puts pure_issues.map { |i| '- ' + i['title'] } if pure_issues.count <= 5
       end
     end
   end
@@ -198,7 +193,7 @@ begin
   # Task local_dependencies_set
   #-----------------------------------------------------------------------------#
 
-  desc "Configure the repositories to use their dependencies from the rainforest (Bundler Local Git Repos feature)"
+  desc 'Configure the repositories to use their dependencies from the rainforest (Bundler Local Git Repos feature)'
   task :local_dependencies_set do
     title "Setting up Bundler's Local Git Repos"
     GEM_REPOS.each do |repo|
@@ -210,7 +205,7 @@ begin
   # Task local_dependencies_unset
   #-----------------------------------------------------------------------------#
 
-  desc "Configure the repositories to use their dependencies from the git remotes"
+  desc 'Configure the repositories to use their dependencies from the git remotes'
   task :local_dependencies_unset do
     title "Setting up Bundler's Local Git Repos"
     GEM_REPOS.each do |repo|
@@ -224,19 +219,19 @@ begin
   # Task status
   #-----------------------------------------------------------------------------#
 
-  desc "Prints the repositories with un-merged branches or a dirty working copy and lists the gems with commits after the last release."
+  desc 'Prints the repositories with un-merged branches or a dirty working copy and lists the gems with commits after the last release.'
   task :status do
-    title "Checking status"
+    title 'Checking status'
 
     dirs_not_in_master = repos.reject do |dir|
       Dir.chdir(dir) do
         branch = `git rev-parse --abbrev-ref HEAD`.chomp
-        ['master', 'develop'].include?(branch)
+        %w(master develop).include?(branch)
       end
     end
 
     unless dirs_not_in_master.empty?
-      subtitle "Repositories not in master/develop branch"
+      subtitle 'Repositories not in master/develop branch'
       puts "- #{dirs_not_in_master.join("\n- ")}"
     end
 
@@ -244,33 +239,31 @@ begin
       Dir.chdir(dir) do
         base_branch = default_branch
         branches = git_branch_list(" --no-merged #{base_branch}")
-        unless branches.empty?
-          "#{dir}: #{branches.join(', ')}"
-        end
+        "#{dir}: #{branches.join(', ')}" unless branches.empty?
       end
     end.compact
 
     unless dirs_with_unmerged_branches.empty?
-      subtitle "Repositories with un-merged branches"
+      subtitle 'Repositories with un-merged branches'
       puts "- #{dirs_with_unmerged_branches.join("\n- ")}"
     end
 
     dirty_dirs = repos.reject do |dir|
       Dir.chdir(dir) do
         `git diff --quiet`
-        exit_status = $?.exitstatus
+        exit_status = $CHILD_STATUS.exitstatus
         `git diff --cached --quiet`
-        cached_exit_status = $?.exitstatus
+        cached_exit_status = $CHILD_STATUS.exitstatus
         exit_status.zero? && cached_exit_status.zero?
       end
     end
 
     unless dirty_dirs.empty?
-      subtitle "Repositories with a dirty working copy"
+      subtitle 'Repositories with a dirty working copy'
       puts "- #{dirty_dirs.join("\n- ")}"
     end
 
-    subtitle "Gems with releases"
+    subtitle 'Gems with releases'
     has_pending_releases = false
     name_commits_tags = gem_dirs.map do |dir|
       tag = last_tag(dir)
@@ -289,23 +282,21 @@ begin
       puts "\n- #{name_commits_tag[0]}\n  #{name_commits_tag[1]} commits since #{name_commits_tag[2]}"
     end
 
-    unless has_pending_releases
-      puts "All the gems are up to date"
-    end
+    puts 'All the gems are up to date' unless has_pending_releases
   end
 
   # Task clean-up
   #-----------------------------------------------------------------------------#
 
-  desc "Performs safe clean-up operations"
+  desc 'Performs safe clean-up operations'
   task :cleanup do
-    title "Cleaning up"
+    title 'Cleaning up'
     cleaned = false
     repos.each do |repo|
       Dir.chdir(repo) do
         base_branch = default_branch
         if base_branch
-          merged_branches =  git_branch_list("--merged #{base_branch}")
+          merged_branches = git_branch_list("--merged #{base_branch}")
           merged_branches.delete(base_branch)
           unless merged_branches.count.zero?
             subtitle repo
@@ -321,23 +312,20 @@ begin
       end
     end
 
-    unless cleaned
-      puts "Nothing to clean"
-    end
+    puts 'Nothing to clean' unless cleaned
   end
-
 
   # Task versions
   #-----------------------------------------------------------------------------#
 
-  desc "Prints the last released version of every gem"
+  desc 'Prints the last released version of every gem'
   task :versions do
-    title "Printing versions"
+    title 'Printing versions'
     GEM_REPOS.each do |dir|
       begin
-      spec = spec(dir)
-      subtitle spec.name
-      puts spec.version
+        spec = spec(dir)
+        subtitle spec.name
+        puts spec.version
       rescue
         next
       end
@@ -347,16 +335,15 @@ begin
   # Task Release
   #-----------------------------------------------------------------------------#
 
-  # TODO:
-  # - Should the bundles be updated?
+  # TODO: Should the bundles be updated?
   #
-  desc "Releases a gem: https://github.com/CocoaPods/Rainforest/wiki"
-  task :release, :gem_dir do |t, args|
+  desc 'Releases a gem: https://github.com/CocoaPods/Rainforest/wiki'
+  task :release, :gem_dir do |_t, args|
     require 'pathname'
     require 'date'
 
-    unless ENV["BUNDLE_GEMFILE"].nil?
-      error("This task is not supported under bundle exec")
+    unless ENV['BUNDLE_GEMFILE'].nil?
+      error('This task is not supported under bundle exec')
       exit 1
     end
 
@@ -370,62 +357,66 @@ begin
       exit 1 if $stdin.gets.strip.downcase != 'y'
     end
 
-    if github_access_token = Pathname('.github_access_token').expand_path.read.strip rescue nil
+    if github_access_token = begin
+                               Pathname('.github_access_token').expand_path.read.strip
+                             rescue
+                               nil
+                             end
       gem 'nap'
       require 'rest'
       require 'json'
     else
-      error "You have not provided a github access token via `.github_access_token`, " \
+      error 'You have not provided a github access token via `.github_access_token`, ' \
        'so a GitHub release cannot be made automatically.'
     end
 
     Dir.chdir(gem_dir) do
-      subtitle "Updating the repo"
+      subtitle 'Updating the repo'
       sh 'git pull --no-rebase'
 
-      subtitle "Running specs"
+      subtitle 'Running specs'
       sh 'bundle exec rake spec'
 
-      subtitle "Adding release date to CHANGELOG"
-      changelog = File.read("CHANGELOG.md")
-      changelog.sub!("## #{gem_version}\n") { |s| "## #{gem_version} (" << Time.now.utc.strftime('%F') << ")\n" }
-      File.open('CHANGELOG.md',  'w') { |f| f << changelog }
+      subtitle 'Adding release date to CHANGELOG'
+      changelog = File.read('CHANGELOG.md')
+      changelog.sub!("## #{gem_version}\n") { |_s| "## #{gem_version} (" << Time.now.utc.strftime('%F') << ")\n" }
+      File.open('CHANGELOG.md', 'w') { |f| f << changelog }
 
-      if has_rake_task?('pre_release')
-        subtitle "Running pre-release task"
+      if rake_task?('pre_release')
+        subtitle 'Running pre-release task'
         sh 'bundle exec rake pre_release'
       end
 
-      subtitle "Validating the gemspec"
+      subtitle 'Validating the gemspec'
       validate_spec(spec('.'))
 
-      subtitle "Building the Gem"
+      subtitle 'Building the Gem'
       sh 'bundle exec rake build'
 
-      subtitle "Testing gem installation (tmp/gems)"
+      subtitle 'Testing gem installation (tmp/gems)'
       gem_filename = Pathname('pkg') + "#{gem_name}-#{gem_version}.gem"
       tmp = File.expand_path('../tmp', __FILE__)
       tmp_gems = File.join(tmp, 'gems')
       silent_sh "rm -rf '#{tmp}'"
       sh "gem install --install-dir='#{tmp_gems}' #{gem_filename}"
 
-      subtitle "Commiting, tagging & Pushing"
+      subtitle 'Commiting, tagging & Pushing'
       sh "git commit -a -m 'Release #{gem_version}'"
       sh "git tag -a #{gem_version} -m 'Release #{gem_version}'"
-      sh "git push origin master"
-      sh "git push origin --tags"
+      sh 'git push origin master'
+      sh 'git push origin --tags'
 
-      subtitle "Releasing the Gem"
+      subtitle 'Releasing the Gem'
       sh "gem push #{gem_filename}"
 
-      if has_rake_task?('post_release')
-        subtitle "Running post_release task"
+      if rake_task?('post_release')
+        subtitle 'Running post_release task'
         sh 'bundle exec rake post_release'
       end
     end
 
     if github_access_token
-      subtitle "Making GitHub release"
+      subtitle 'Making GitHub release'
       make_github_release(gem_dir, gem_version, gem_version.to_s, github_access_token)
       `open https://github.com/CocoaPods/#{gem_dir}/releases/#{gem_version}`
     end
@@ -436,11 +427,11 @@ begin
   # Task Update RuboCop configuration
   #-----------------------------------------------------------------------------#
 
-  desc "Update the shared CocoaPods RuboCop configuration for the given repo or for all the repos"
-  task :update_rubocop_configuration, :gem_dir do |t, args|
+  desc 'Update the shared CocoaPods RuboCop configuration for the given repo or for all the repos'
+  task :update_rubocop_configuration, :gem_dir do |_t, args|
     repo = {
       'name' => 'shared',
-      'clone_url' => 'https://github.com/CocoaPods/shared.git'
+      'clone_url' => 'https://github.com/CocoaPods/shared.git',
     }
     clone_repos([repo]) unless File.exist?('shared')
 
@@ -462,27 +453,21 @@ begin
       end
     end
 
-    if has_changes
-      puts "\nCommit manually to the above repos"
-    end
+    puts "\nCommit manually to the above repos" if has_changes
   end
-
 
   #-- Spec -------------------------------------------------------------------#
 
-  desc "Run all specs of all the gems"
+  desc 'Run all specs of all the gems'
   task :spec do
-    title "Running specs"
-    GEM_REPOS.reverse.each do |repo|
-      spec = spec(repo)
+    title 'Running specs'
+    GEM_REPOS.reverse_each do |repo|
       Dir.chdir(repo) do
         subtitle repo
         sh 'bundle exec rake spec'
       end
     end
   end
-
-
 
 rescue LoadError
   $stderr.puts "\033[0;31m" \
@@ -513,7 +498,7 @@ end
 def fetch_repos
   require 'json'
   require 'open-uri'
-  title "Fetching repositories list"
+  title 'Fetching repositories list'
   url = 'https://api.github.com/orgs/CocoaPods/repos?type=public'
   repos = []
   loop do
@@ -547,7 +532,7 @@ def clone_repos(repos)
     subtitle "Cloning #{name}"
     url = repo['clone_url']
     if File.exist?(name)
-      puts "Already cloned"
+      puts 'Already cloned'
     else
       sh "git clone #{url}"
     end
@@ -563,11 +548,11 @@ end
 #
 def pull_current_repo(update_submodules)
   subtitle "Pulling #{File.basename(Dir.getwd)}"
-  sh "git remote update"
+  sh 'git remote update'
   status = `git status -uno`
   unless status.include?('up-to-date') || status.include?('ahead')
-    sh "git pull --no-commit"
-    sh "git submodule update" if update_submodules
+    sh 'git pull --no-commit'
+    sh 'git submodule update' if update_submodules
     return true
   end
   false
@@ -583,7 +568,7 @@ def check_repo_for_release(repo_dir, version)
   errors = []
   Dir.chdir(repo_dir) do
     if `git symbolic-ref HEAD 2>/dev/null`.strip.split('/').last !~ /(\Amaster)|(-stable)\Z/
-      errors << "You need to be on the `master` branch or a `stable` branch in order to do a release."
+      errors << 'You need to be on the `master` branch or a `stable` branch in order to do a release.'
     end
 
     if `git tag`.strip.split("\n").include?(version.to_s)
@@ -593,14 +578,14 @@ def check_repo_for_release(repo_dir, version)
     diff_lines = `git diff --name-only`.strip.split("\n")
 
     if diff_lines.size == 0
-      errors << "Change the version number of the gem yourself"
+      errors << 'Change the version number of the gem yourself'
     end
 
     diff_lines.delete('Gemfile.lock')
     diff_lines.delete('CHANGELOG.md')
     unless diff_lines.count == 1
-      # TODO Check that is only the version file changed
-      error = "Only change the version, the CHANGELOG.md and the Gemfile.lock files"
+      # TODO: Check that is only the version file changed
+      error = 'Only change the version, the CHANGELOG.md and the Gemfile.lock files'
       error << "\n- " + diff_lines.join("\n- ")
       errors << error
     end
@@ -640,39 +625,37 @@ def git_branch_list(arguments = nil)
 end
 
 def default_branch
-  default_branches = ['master', 'develop']
+  default_branches = %w(master develop)
   branches = git_branch_list
   common = branches & default_branches
-  if common.count == 1
-    common.first
-  end
+  common.first if common.count == 1
 end
 
 def make_github_release(repo, version, tag, access_token)
   body = changelog_for_repo(repo, version)
 
   REST.post("https://api.github.com/repos/CocoaPods/#{repo}/releases?access_token=#{access_token}",
-    {
-      tag_name: tag,
-      name: version.to_s,
-      body: body,
-      prerelease: version.prerelease?,
-    }.to_json,
-    {
-      'Content-Type' => 'application/json',
-      'User-Agent' => 'runscope/0.1,segiddins',
-      'Accept' => '*/*',
-      'Accept-Encoding' => 'gzip, deflate',
-    },
-  )
+            {
+              :tag_name => tag,
+              :name => version.to_s,
+              :body => body,
+              :prerelease => version.prerelease?,
+            }.to_json,
+            {
+              'Content-Type' => 'application/json',
+              'User-Agent' => 'runscope/0.1,segiddins',
+              'Accept' => '*/*',
+              'Accept-Encoding' => 'gzip, deflate',
+            },
+           )
 end
 
 def changelog_for_repo(repo, version)
   changelog_path = File.expand_path('CHANGELOG.md', repo)
-  if File.exists?(changelog_path)
+  if File.exist?(changelog_path)
     title_token = '## '
     current_verison_title = title_token + version.to_s
-    text = File.open(changelog_path, "r:UTF-8") { |f| f.read }
+    text = File.open(changelog_path, 'r:UTF-8', &:read)
     lines = text.split("\n")
 
     current_version_index = lines.find_index { |line| line.strip =~ /^#{current_verison_title}($|\b)/ }
@@ -680,7 +663,7 @@ def changelog_for_repo(repo, version)
       raise "Update the changelog for the last version (#{version})"
     end
     current_version_index += 1
-    previous_version_lines = lines[(current_version_index+1)...-1]
+    previous_version_lines = lines[(current_version_index + 1)...-1]
     previous_version_index = current_version_index + (
       previous_version_lines.find_index { |line| line.start_with?(title_token) && !%w(rc beta).any? { |pre| line.include?(pre) } } ||
       lines.count
@@ -704,11 +687,9 @@ end
 
 def spec(gem_dir)
   files = Dir.glob("#{gem_dir}/*.gemspec")
-  unless files.count == 1
-    error("Unable to select a gemspec in #{gem_dir}")
-  end
+  error("Unable to select a gemspec in #{gem_dir}") unless files.count == 1
   spec_path = files.first
-  spec = Gem::Specification::load(spec_path.to_s)
+  Gem::Specification.load(spec_path.to_s)
 end
 
 def validate_spec(spec)
@@ -751,7 +732,7 @@ end
 # @return [Bool] Whether the Rakefile in the current working directory has a
 #         task with the given name.
 #
-def has_rake_task?(task)
+def rake_task?(task)
   `rake --no-search --tasks #{task}`.include?("rake #{task}")
 end
 
@@ -772,9 +753,9 @@ end
 #
 def title(string)
   puts
-  puts "-" * 80
+  puts '-' * 80
   puts cyan(string)
-  puts "-" * 80
+  puts '-' * 80
 end
 
 def subtitle(string)
