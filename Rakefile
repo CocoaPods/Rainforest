@@ -21,6 +21,7 @@ GEM_REPOS = %w[
   cocoapods-trunk
   cocoapods-search
   Molinillo
+  Cork
 ]
 
 # @return [Array<String>] The list of the repos contains "template" contents
