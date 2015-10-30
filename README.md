@@ -19,6 +19,9 @@ In detail, the following tasks can be performed from a centralised location:
 
 [Local Git Repos]: http://bundler.io/v1.5/git.html
 
+## Ruby Version
+
+It is recommended to use system Ruby for CocoaPods development. If you are using rbenv or similar to manage your ruby environment, note that there are issues with certain dependencies under Ruby 2.2.x and higher.
 
 ## Usage
 
