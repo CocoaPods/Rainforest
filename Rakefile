@@ -251,9 +251,9 @@ begin
     dirty_dirs = repos.reject do |dir|
       Dir.chdir(dir) do
         `git diff --quiet`
-        exit_status = $CHILD_STATUS.exitstatus
+        exit_status = $?.exitstatus
         `git diff --cached --quiet`
-        cached_exit_status = $CHILD_STATUS.exitstatus
+        cached_exit_status = $?.exitstatus
         exit_status.zero? && cached_exit_status.zero?
       end
     end
