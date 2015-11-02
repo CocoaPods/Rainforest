@@ -21,7 +21,7 @@ In detail, the following tasks can be performed from a centralised location:
 
 ## Ruby Version
 
-It is recommended to use system Ruby for CocoaPods development. If you are using rbenv or similar to manage your ruby environment, note that there are issues with certain dependencies under Ruby 2.2.x and higher.
+While there is no recommendation to use a specific version of Ruby, note that there are issues with certain dependencies under Ruby 2.2.x and higher.
 
 ## Usage
 
