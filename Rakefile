@@ -530,7 +530,7 @@ def clone_repos(repos)
     if File.exist?(name)
       puts 'Already cloned'
     else
-      sh "git clone #{url} --depth 1"
+      sh "git clone #{url} --depth 1 --recursive"
     end
   end
 end
