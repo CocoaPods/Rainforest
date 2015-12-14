@@ -47,9 +47,9 @@ task :default => :status
 #-----------------------------------------------------------------------------#
 
 desc 'Clones all the CocoaPods repositories'
-task :bootstrap do
+task :bootstrap, [:unshallow] do |t, args|
   if system('which bundle')
-    Rake::Task[:clone].invoke
+    Rake::Task[:clone].invoke args.unshallow
     Rake::Task[:bootstrap_repos].invoke
   else
     $stderr.puts "\033[0;31m" \
@@ -66,10 +66,11 @@ begin
   #-----------------------------------------------------------------------------#
 
   desc 'Clones the GEM repositories'
-  task :clone do
+  task :clone, [:unshallow] do |t, args|
+    shallow = args.unshallow == nil || args.unshallow == 'false'
     repos = fetch_default_repos
     title 'Cloning the GEM repositories'
-    clone_repos(repos)
+    clone_repos(repos, shallow)
   end
 
   # Task clone_all
@@ -80,6 +81,20 @@ begin
     repos = fetch_repos
     title 'Cloning gem repositories'
     clone_repos(repos)
+  end
+
+  # Task unshallow
+  #-----------------------------------------------------------------------------#
+
+  desc 'Unshallows ALL the CocoaPods repositories'
+  task :unshallow_all do
+    title 'Unshallowing gem repositories'
+    repos.each do |dir|
+      Dir.chdir(dir) do
+        subtitle "Unshallowing #{dir}"
+        system('git', 'fetch', '--unshallow')
+      end
+    end
   end
 
   # Task bootstrap_repos
@@ -522,7 +537,7 @@ end
 #
 # @return [void]
 #
-def clone_repos(repos)
+def clone_repos(repos, shallow=true)
   repos.each do |repo|
     name = repo['name']
     subtitle "Cloning #{name}"
@@ -530,7 +545,11 @@ def clone_repos(repos)
     if File.exist?(name)
       puts 'Already cloned'
     else
-      sh "git clone #{url}"
+      if shallow
+        system("git", "clone", url, "--depth", "1", "--recursive")
+      else
+        system("git", "clone", url)
+      end
     end
   end
 end
