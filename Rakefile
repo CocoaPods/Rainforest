@@ -306,20 +306,25 @@ begin
   desc 'Print the topological ordering of all the Rainforest gems'
   task :topological_order do
     gems = Hash[gem_dirs.map { |repo| [gem_name(repo), repo] }]
-    gemfile = proc do
-      gems.each do |name, repo|
-        gem name, :path => repo
-      end
-    end
+
     require 'bundler'
     old_root = Bundler.method(:root)
     def Bundler.root
       Bundler::SharedHelpers.pwd.expand_path
     end
+
+    gemfile = proc do
+      gems.each do |name, repo|
+        gem name, :path => repo
+      end
+    end
     builder = Bundler::Dsl.new
     builder.instance_eval(&gemfile)
     definition = builder.to_definition(nil, true)
-    puts definition.specs.map { |s| gems[s.name] }.compact
+
+    sorted_specs = definition.specs.map { |s| gems[s.name] }.compact
+    puts sorted_specs
+
     bundler_module = class << Bundler; self; end
     bundler_module.send(:define_method, :root, old_root)
   end
