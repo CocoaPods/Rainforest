@@ -440,9 +440,10 @@ begin
       silent_sh "rm -rf '#{tmp}'"
       sh "gem install --install-dir='#{tmp_gems}' #{gem_filename}"
 
-      subtitle 'Commiting, tagging & Pushing'
+      subtitle 'Commiting, Tagging, and Pushing'
       sh "git commit -a -m 'Release #{gem_version}'"
       sh "git tag -a #{gem_version} -m 'Release #{gem_version}'"
+      add_empty_master_changelog_section && sh "git commit -am '[CHANGELOG] Add empty Master section'"
       sh 'git push origin master'
       sh 'git push origin --tags'
 
@@ -611,7 +612,7 @@ end
 def check_repo_for_release(repo_dir, version)
   errors = []
   Dir.chdir(repo_dir) do
-    if `git symbolic-ref HEAD 2>/dev/null`.strip.split('/').last !~ /(\Amaster)|(-stable)\Z/
+    if current_branch !~ /(\Amaster)|(-stable)\Z/
       errors << 'You need to be on the `master` branch or a `stable` branch in order to do a release.'
     end
 
@@ -668,6 +669,10 @@ def git_branch_list(arguments = nil)
   branches.map { |line| line.split(' ').last }
 end
 
+def current_branch
+  `git symbolic-ref HEAD 2>/dev/null`.strip.split('/').last
+end
+
 def default_branch
   default_branches = %w(master develop)
   branches = git_branch_list
@@ -720,11 +725,9 @@ def changelog_for_repo(repo, version)
 end
 
 def github_access_token
-  begin
-    Pathname('.github_access_token').expand_path.read.strip
-  rescue
-    nil
-  end
+  Pathname('.github_access_token').expand_path.read.strip
+rescue
+  nil
 end
 
 def github_access_token_query
@@ -732,6 +735,31 @@ def github_access_token_query
     "access_token=#{token}"
   else
     ''
+  end
+end
+
+# @return [Boolean] Whether the empty Master section was added to the CHANGELOG
+#
+def add_empty_master_changelog_section(repo)
+  Dir.chdir(repo) do
+    changelog_file = 'CHANGELOG.md'
+    changelog = File.read(changelog_file)
+    return if changelog.match(/^## (.+)/).captures.first == 'Master'
+    return unless current_branch == 'master'
+    # This uses an array of strings so text editors dont strip the trailing spaces
+    changelog.sub! '##', ['## Master',
+                          '',
+                          '##### Enhancements',
+                          '',
+                          '* None.  ',
+                          '',
+                          '##### Bug Fixes',
+                          '',
+                          '* None.  ',
+                          '',
+                          '',
+                          '##'].join("\n")
+    File.write(changelog_file, changelog)
   end
 end
 
