@@ -443,7 +443,7 @@ begin
       subtitle 'Commiting, Tagging, and Pushing'
       sh "git commit -a -m 'Release #{gem_version}'"
       sh "git tag -a #{gem_version} -m 'Release #{gem_version}'"
-      add_empty_master_changelog_section && sh "git commit -am '[CHANGELOG] Add empty Master section'"
+      add_empty_master_changelog_section && sh("git commit -am '[CHANGELOG] Add empty Master section'")
       sh 'git push origin master'
       sh 'git push origin --tags'
 
