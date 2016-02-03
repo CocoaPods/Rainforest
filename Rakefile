@@ -637,7 +637,7 @@ def check_repo_for_release(repo_dir, version)
 
     unless Pathname.new('CHANGELOG.md').read.lines.include?("## #{version}\n")
       errors << "The CHANGELOG.md doesn't include the released version " \
-        "`## #{version}`.Update it manually."
+        "`## #{version}`. Update it manually."
     end
   end
 
