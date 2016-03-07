@@ -10,6 +10,7 @@ GEM_REPOS = %w(
   CLAide
   claide-completion
   CocoaPods
+  cocoapods-acknowledgements
   cocoapods-deintegrate
   cocoapods-docs
   cocoapods-downloader
