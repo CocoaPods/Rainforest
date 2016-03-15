@@ -107,7 +107,7 @@ begin
     rakefile_repos.each do |dir|
       Dir.chdir(dir) do
         subtitle "Bootstrapping #{dir}"
-        sh 'rake --no-search bootstrap' if rake_task?('bootstrap')
+        sh 'rake --no-search bootstrap' if rake_task?('bootstrap', :allow_bundler => false)
       end
     end
 
@@ -823,8 +823,17 @@ end
 # @return [Bool] Whether the Rakefile in the current working directory has a
 #         task with the given name.
 #
-def rake_task?(task)
-  `rake --no-search --tasks #{task}`.include?("rake #{task}")
+def rake_task?(task, allow_bundler: true)
+  command = "rake --no-search --tasks '#{task}'"
+  if allow_bundler
+    begin
+      require 'bundler'
+      command.prepend("bundle exec ") if Bundler::SharedHelpers.in_bundle?
+    rescue
+      nil
+    end
+  end
+  `#{command}`.include?("rake #{task}")
 end
 
 def silent_sh(command)
