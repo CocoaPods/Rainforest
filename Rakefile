@@ -387,6 +387,15 @@ begin
   task :post_cocoapods_release, :version do |_t, args|
     version = Gem::Version.create(args[:version])
 
+    chruby_exec = -> do
+      ruby = `postit platform --ruby`
+      if ruby =~ Gem::Version::VERSION_PATTERN
+        "chruby-exec #{ruby} -- "
+      else
+        ''
+      end
+    end
+
     title "Updating CocoaPods versions elsewhere"
     web_repos_to_update = %w(guides.cocoapods.org trunk.cocoapods.org)
     web_repos_to_update.each do |repo|
@@ -398,7 +407,7 @@ begin
                           "cocoapods-core"
                         end
         subtitle "Updating #{gem_to_update} in #{repo}"
-        silent_sh "postit update #{gem_to_update}"
+        silent_sh "#{chruby_exec[]} postit update #{gem_to_update}"
         sh "git add Gemfile.lock"
         sh 'git', 'commit', '-m', "Update #{gem_to_update} to #{version}"
         sh "git push"
@@ -413,10 +422,10 @@ begin
     title 'Updating contributors on the website'
     Dir.chdir('../Strata/cocoapods.org') do
       ensure_master_and_clean!('.')
-      sh "bundle exec rake generate"
+      sh "#{chruby_exec[]} bundle exec rake generate"
       sh 'git', 'commit', '-am', "[Contributors] Update for the release of #{version}"
       sh "git push"
-      sh "rake deploy"
+      sh "#{chruby_exec[]} rake deploy"
     end
 
     minor_update = version == Gem::Version.create(version.segments[0, 2].compact.join('.'))
