@@ -315,6 +315,7 @@ begin
     def Bundler.root
       Bundler::SharedHelpers.pwd.expand_path
     end
+    ENV['BUNDLE_GEMFILE'] = 'Gemfile'
 
     gemfile = proc do
       gems.each do |name, repo|
@@ -330,6 +331,7 @@ begin
 
     bundler_module = class << Bundler; self; end
     bundler_module.send(:define_method, :root, old_root)
+    ENV.delete('BUNDLE_GEMFILE')
   end
 
   # Task clean-up
@@ -457,6 +459,11 @@ begin
       error('Failed to update the gem version') unless gem_version('.') == version
 
       name = gem_name('.')
+
+      lockfile = Pathname("Gemfile.lock")
+      lockfile_contents = lockfile.read.gsub(/(^\s{6}#{name}\s)\(.*/, "\\1(= #{version})")
+      lockfile.open("w") { |f| f.write(lockfile_contents) }
+
       subtitle "Running bundle update"
       silent_sh "postit update #{name}"
 
