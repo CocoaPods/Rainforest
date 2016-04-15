@@ -388,9 +388,8 @@ begin
     version = Gem::Version.create(args[:version])
 
     chruby_exec = -> do
-      ruby = `postit platform --ruby`
-      if ruby =~ Gem::Version::VERSION_PATTERN
-        "chruby-exec #{ruby} -- "
+      if `postit platform --ruby`.strip =~ /ruby (#{Gem::Version::VERSION_PATTERN})/
+        "SHELL=bash chruby-exec #{$1} -- "
       else
         ''
       end
@@ -422,10 +421,10 @@ begin
     title 'Updating contributors on the website'
     Dir.chdir('../Strata/cocoapods.org') do
       ensure_master_and_clean!('.')
-      sh "#{chruby_exec[]} bundle exec rake generate"
+      sh "#{chruby_exec[]} postit exec rake generate"
       sh 'git', 'commit', '-am', "[Contributors] Update for the release of #{version}"
       sh "git push"
-      sh "#{chruby_exec[]} rake deploy"
+      sh "#{chruby_exec[]} postit exec rake deploy"
     end
 
     minor_update = version == Gem::Version.create(version.segments[0, 2].compact.join('.'))
@@ -479,7 +478,7 @@ begin
       confirm!("git diff:\n#{`git diff HEAD`}\n\nAre you ready to release these changes?")
     end
 
-    Rake::Task[:release].invoke(*args)
+    Rake::Task[:release].invoke(version)
 
     title "Updating dependent gemspecs of #{name}"
     gem_dirs.each do |dir|
