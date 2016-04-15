@@ -382,6 +382,119 @@ begin
   # Task Release
   #-----------------------------------------------------------------------------#
 
+  task :post_cocoapods_release, :version do |_t, args|
+    version = Gem::Version.create(args[:version])
+
+    title "Updating CocoaPods versions elsewhere"
+    web_repos_to_update = %w(guides.cocoapods.org trunk.cocoapods.org)
+    web_repos_to_update.each do |repo|
+      Dir.chdir("../Strata/#{repo}") do
+        ensure_master_and_clean!('.')
+        gem_to_update = if File.read('Gemfile') =~ /(['"])cocoapods\1/
+                          "cocoapods"
+                        else
+                          "cocoapods-core"
+                        end
+        subtitle "Updating #{gem_to_update} in #{repo}"
+        silent_sh "postit update #{gem_to_update}"
+        sh "git add Gemfile.lock"
+        sh 'git', 'commit', '-m', "Update #{gem_to_update} to #{version}"
+        sh "git push"
+
+        if `git remote`.include?('heroku')
+          subtitle "Deploying to heroku"
+          silent_sh "git push heroku"
+        end
+      end
+    end
+
+    title 'Updating contributors on the website'
+    Dir.chdir('../Strata/cocoapods.org') do
+      ensure_master_and_clean!('.')
+      sh "bundle exec rake generate"
+      sh 'git', 'commit', '-am', "[Contributors] Update for the release of #{version}"
+      sh "git push"
+      sh "rake deploy"
+    end
+
+    minor_update = version == Gem::Version.create(version.segments[0, 2].compact.join('.'))
+    if minor_update
+      confirm('Go release the blog post!')
+    end
+    confirm("Time to tweet!\n\n🎉 I just released @CocoaPods #{version} ____! 🚀\n\n📝 https://github.com/CocoaPods/CocoaPods/releases/#{version}\n\n\nYou tweeted it?")
+    confirm("You retweeted from @CocoaPods?")
+  end
+
+  task :super_release, :gem_dir, :version do |_t, args|
+    require 'pathname'
+
+    gem_dirs.each(&method(:ensure_master_and_clean!))
+
+    gem_dir = Pathname(args[:gem_dir])
+    name    = nil
+    version = Gem::Version.create(args[:version])
+
+    confirm!("## Master\n\n#{changelog_for_repo(gem_dir, 'Master')}\n\n\n Is this correct?")
+
+    title "Updating #{gem_dir} to #{version}"
+    Dir.chdir(gem_dir) do
+      subtitle "Updating the CHANGELOG"
+      changelog = Pathname("CHANGELOG.md")
+      changelog_contents = changelog.read
+      changelog_contents.sub!(/## Master/, "## #{version}")
+      changelog.open('w') { |f| f.write(changelog_contents) }
+
+      subtitle "Updating the gem version constant"
+      version_constant_pattern = /(VERSION = (['"]))#{Gem::Version::VERSION_PATTERN}\2/
+      unless version_file = Pathname.glob("lib/**/{gem_version,#{name},cocoapods_plugin,*}.rb").
+                                     find { |f| File.read(f) =~ version_constant_pattern }
+        error "Unable to find a file to bump the version constant in"
+      end
+      version_file_contents = File.read(version_file)
+      version_file_contents.sub!(version_constant_pattern, "\\1#{version}\\2")
+      File.open(version_file, 'w') { |f| f.write(version_file_contents) }
+
+      error('Failed to update the gem version') unless gem_version('.') == version
+
+      name = gem_name('.')
+      subtitle "Running bundle update"
+      silent_sh "postit update #{name}"
+
+      confirm!("git diff:\n#{`git diff HEAD`}\n\nAre you ready to release these changes?")
+    end
+
+    Rake::Task[:release].invoke(*args)
+
+    title "Updating dependent gemspecs of #{name}"
+    gem_dirs.each do |dir|
+      gem_name = gem_name(dir)
+      next unless spec(dir).dependencies.any? { |dep| dep.name == name }
+      next if gem_name == 'cocoapods' && name == 'cocoapods-core'
+      Dir.chdir(dir) do
+        spec = Pathname("#{gem_name}.gemspec")
+        spec_contents = spec.read
+        dependency = if version.prerelease?
+                       "'#{version}'"
+                     elsif version.segments.first.zero?
+                       "'~> #{version}'"
+                     else
+                       "'>= #{version}', '< #{version.segments.first + 1}.0'"
+                     end
+        if spec_contents.sub!(/(dependency (['"])#{name}\2,\s+).+/, "\\1#{dependency}")
+          subtitle "Updating #{spec}'s dependency on #{name} to `#{dependency}`"
+          puts
+          spec.open('w') {|f| f.write(spec_contents)}
+          silent_sh "postit update #{gem_name}"
+          sh "git add #{spec} Gemfile.lock"
+          sh 'git', 'commit', '-m', "[Gemspec] Bump #{gem_dir} to `#{dependency}`"
+          puts
+        end
+      end
+    end
+
+    Rake::Task[:post_cocoapods_release].invoke(*args) if name == 'cocoapods'
+  end
+
   # TODO: Should the bundles be updated?
   #
   desc 'Releases a gem: https://github.com/CocoaPods/Rainforest/wiki'
@@ -400,8 +513,7 @@ begin
     title "Releasing #{gem_name} #{gem_version} (from #{last_tag(gem_dir)})"
     unless ENV['SKIP_CHECKS']
       check_repo_for_release(gem_dir, gem_version)
-      print "You are about to release `#{gem_version}`, is that correct? [y/n] "
-      exit 1 if $stdin.gets.strip.downcase != 'y'
+      confirm!("You are about to release `#{gem_version}`, is that correct?")
     end
 
     if github_access_token
@@ -659,6 +771,17 @@ def check_repo_for_release(repo_dir, version)
   end
 end
 
+def ensure_master_and_clean!(repo)
+  Dir.chdir(repo) do
+    if current_branch !~ /(\Amaster)|(-stable)\Z/
+      error "[#{repo}] You need to be on the `master` branch or a `stable` branch in order to do a release."
+    end
+    unless `git diff --name-only -z`.strip.split("\0").empty?
+      error "[#{repo}] There are uncommited changes, commit them to do a release."
+    end
+  end
+end
+
 # @return [Array<String>] All the checked out repos
 #
 def repos
@@ -787,7 +910,10 @@ def spec(gem_dir)
   files = Dir.glob("#{gem_dir}/*.gemspec")
   error("Unable to select a gemspec in #{gem_dir}") unless files.count == 1
   spec_path = files.first
-  Gem::Specification.load(spec_path.to_s)
+  eval(File.read(spec_path), binding, spec_path.to_s).tap do |spec|
+    raise "Failed to load #{spec_path}" unless spec
+    spec.loaded_from = spec_path.to_s
+  end
 end
 
 def validate_spec(spec)
@@ -855,6 +981,11 @@ end
 
 # UI
 #-----------------------------------------------------------------------------#
+
+def confirm!(message)
+  print "#{message} [y/n] "
+  exit 1 if $stdin.gets.strip.downcase != 'y'
+end
 
 # Prints a title.
 #
