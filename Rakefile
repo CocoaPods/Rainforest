@@ -785,7 +785,7 @@ end
 # @return [Array<String>] All the checked out repos
 #
 def repos
-  Dir['*/'].map { |dir| dir[0...-1] }
+  Dir['*/'].map { |dir| dir[0...-1] } - %w(tmp)
 end
 
 # @return [Array<String>] All the directories that contains a Rakefile,
