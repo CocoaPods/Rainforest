@@ -478,7 +478,7 @@ begin
       confirm!("git diff:\n#{`git diff HEAD`}\n\nAre you ready to release these changes?")
     end
 
-    Rake::Task[:release].invoke(version)
+    Rake::Task[:release].invoke(gem_dir)
 
     title "Updating dependent gemspecs of #{name}"
     gem_dirs.each do |dir|
@@ -507,7 +507,9 @@ begin
       end
     end
 
-    Rake::Task[:post_cocoapods_release].invoke(*args) if name == 'cocoapods'
+    if task = Rake::Task[:"post_#{name}_release"]
+      task.invoke(*args)
+    end
   end
 
   # TODO: Should the bundles be updated?
