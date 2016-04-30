@@ -445,6 +445,7 @@ begin
         sh "rake vendor:molinillo\\[#{version}\\]"
         sh "git commit -am 'Update vendored Molinillo to #{version}'"
         sh "git push origin seg-molinillo-#{version}"
+        sh "git checkout master"
         confirm("Make a pr to #{File.basename(repo)}:\n\nSee https://github.com/CocoaPods/Molinillo/releases/#{version}")
       end
     end
@@ -523,7 +524,7 @@ begin
     end
 
     if task = Rake.application.lookup("post_#{name}_release")
-      task.invoke(*args)
+      task.invoke(version)
     end
   end
 
