@@ -435,6 +435,21 @@ begin
     confirm("You retweeted from @CocoaPods?")
   end
 
+  task :post_molinillo_release, :version do |_t, args|
+    version = Gem::Version.create(args[:version])
+    automatiek_dependents = %w(../OpenSource/RubyGems ../OpenSource/bundler)
+    automatiek_dependents.each do |repo|
+      ensure_master_and_clean!(repo)
+      Dir.chdir(repo) do
+        sh "git checkout -b seg-molinillo-#{version}"
+        sh "rake vendor:molinillo\\[#{version}\\]"
+        sh "git commit -am 'Update vendored Molinillo to #{version}'"
+        sh "git push origin seg-molinillo-#{version}"
+        confirm("Make a pr to #{File.basename(repo)}:\n\nSee https://github.com/CocoaPods/Molinillo/releases/#{version}")
+      end
+    end
+  end
+
   task :super_release, :gem_dir, :version do |_t, args|
     require 'pathname'
 
