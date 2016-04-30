@@ -431,8 +431,8 @@ begin
     if minor_update
       confirm('Go release the blog post!')
     end
-    confirm("Time to tweet!\n\n🎉 I just released @CocoaPods #{version} ____! 🚀\n\n📝 https://github.com/CocoaPods/CocoaPods/releases/#{version}\n\n\nYou tweeted it?")
-    confirm("You retweeted from @CocoaPods?")
+    confirm!("Time to tweet!\n\n🎉 I just released @CocoaPods #{version} ____! 🚀\n\n📝 https://github.com/CocoaPods/CocoaPods/releases/#{version}\n\n\nYou tweeted it?")
+    confirm!("You retweeted from @CocoaPods?")
   end
 
   task :post_molinillo_release, :version do |_t, args|
@@ -446,7 +446,7 @@ begin
         sh "git commit -am 'Update vendored Molinillo to #{version}'"
         sh "git push origin seg-molinillo-#{version}"
         sh "git checkout master"
-        confirm("Make a pr to #{File.basename(repo)}:\n\nSee https://github.com/CocoaPods/Molinillo/releases/#{version}")
+        confirm!("Make a pr to #{File.basename(repo)}:\n\nSee https://github.com/CocoaPods/Molinillo/releases/#{version}\n\n")
       end
     end
   end
