@@ -507,7 +507,7 @@ begin
       end
     end
 
-    if task = Rake::Task[:"post_#{name}_release"]
+    if task = Rake.application.lookup("post_#{name}_release")
       task.invoke(*args)
     end
   end
