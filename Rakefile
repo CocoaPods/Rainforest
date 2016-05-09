@@ -443,11 +443,18 @@ begin
       silent_sh "rm -rf '#{tmp}'"
       sh "gem install --install-dir='#{tmp_gems}' #{gem_filename}"
 
+      stable_branch = gem_version.segments[0, 2].join('-') + '-stable'
+
+      sh "git checkout -b #{stable_branch}" unless git_branch_list.include?(stable_branch)
+
       subtitle 'Commiting, Tagging, and Pushing'
       sh "git commit -a -m 'Release #{gem_version}'"
       sh "git tag -a #{gem_version} -m 'Release #{gem_version}'"
       add_empty_master_changelog_section('.') && sh("git commit -am '[CHANGELOG] Add empty Master section'")
-      sh 'git push origin master'
+      sh "git push origin #{current_branch}"
+      sh "git checkout master"
+      sh "git merge --no-edit #{gem_version}"
+      sh "git push origin master"
       sh 'git push origin --tags'
 
       subtitle 'Releasing the Gem'
@@ -748,7 +755,7 @@ def add_empty_master_changelog_section(repo)
     changelog_file = 'CHANGELOG.md'
     changelog = File.read(changelog_file)
     return if changelog.match(/^## (.+)/).captures.first == 'Master'
-    return unless current_branch == 'master'
+    return unless current_branch =~ /(\Amaster|-stable)\z/
     # This uses an array of strings so text editors dont strip the trailing spaces
     changelog.sub! '##', ['## Master',
                           '',
