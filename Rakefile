@@ -427,7 +427,7 @@ begin
 
     minor_update = version == Gem::Version.create(version.segments[0, 2].compact.join('.'))
     if minor_update
-      confirm('Go release the blog post!')
+      confirm!('Go release the blog post!')
     end
     confirm!("Time to tweet!\n\n🎉 I just released @CocoaPods #{version} ____! 🚀\n\n📝 https://github.com/CocoaPods/CocoaPods/releases/#{version}\n\n\nYou tweeted it?")
     confirm!("You retweeted from @CocoaPods?")
