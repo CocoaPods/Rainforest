@@ -398,7 +398,7 @@ begin
     title "Updating CocoaPods versions elsewhere"
     web_repos_to_update = %w(guides.cocoapods.org trunk.cocoapods.org)
     web_repos_to_update.each do |repo|
-      Dir.chdir("../Strata/#{repo}") do
+      Dir.chdir(File.expand_path(repo, options['strata'])) do
         ensure_master_and_clean!('.')
         gem_to_update = if File.read('Gemfile') =~ /(['"])cocoapods\1/
                           "cocoapods"
@@ -419,7 +419,7 @@ begin
     end
 
     title 'Updating contributors on the website'
-    Dir.chdir('../Strata/cocoapods.org') do
+    Dir.chdir(File.expand_path('cocoapods.org', options['strata'])) do
       ensure_master_and_clean!('.')
       sh "#{chruby_exec[]} postit exec rake generate"
       sh 'git', 'commit', '-am', "[Contributors] Update for the release of #{version}"
@@ -437,7 +437,7 @@ begin
 
   task :post_molinillo_release, :version do |_t, args|
     version = Gem::Version.create(args[:version])
-    automatiek_dependents = %w(../OpenSource/RubyGems ../OpenSource/bundler)
+    automatiek_dependents = [File.expand_path(options['rubygems']), File.expand_path(options['bundler'])]
     automatiek_dependents.each do |repo|
       ensure_master_and_clean!(repo)
       Dir.chdir(repo) do
@@ -451,7 +451,7 @@ begin
     end
   end
 
-  task :super_release, :gem_dir, :version do |_t, args|
+  task :super_release, [:gem_dir, :version] => 'ensure_master_and_clean:all' do |_t, args|
     require 'pathname'
 
     gem_dirs.each(&method(:ensure_master_and_clean!))
@@ -1022,6 +1022,15 @@ def silent_sh(command)
   output
 end
 
+def options
+  @options ||= begin
+    require 'yaml'
+    YAML.load(File.read('options.yml'))
+  rescue => e
+    error "Ensure you have a valid options file.\n#{e}"
+  end
+end
+
 # UI
 #-----------------------------------------------------------------------------#
 
@@ -1069,4 +1078,32 @@ end
 #
 def cyan(string)
   "\033[0;36m#{string}\033[0m"
+end
+
+# Task ensure_master_and_clean
+#----------------------------------------------------------------------------#
+
+namespace :ensure_master_and_clean do |ensure_master_and_clean|
+
+  GEM_REPOS.each do |repo|
+    task repo do
+      ensure_master_and_clean!(repo)
+    end
+  end
+
+  %w(bundler rubygems).each do |repo|
+    task repo do
+      ensure_master_and_clean!(File.expand_path(options[repo]))
+    end
+  end
+
+  namespace 'strata' do
+    Dir[File.expand_path('*/', options['strata'])].each do |repo|
+      task File.basename(repo) do
+        ensure_master_and_clean!(repo)
+      end
+    end
+  end
+
+  task :all => Rake.application.tasks_in_scope(ensure_master_and_clean.scope)
 end
