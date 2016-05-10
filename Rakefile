@@ -496,6 +496,8 @@ begin
 
     Rake::Task[:release].invoke(gem_dir)
 
+    return unless version != versions(gem_dir).last
+
     title "Updating dependent gemspecs of #{name}"
     gem_dirs.each do |dir|
       gem_name = gem_name(dir)
@@ -980,6 +982,14 @@ end
 def last_tag(dir)
   Dir.chdir(dir) do
     `git describe --abbrev=0 2>/dev/null`.chomp
+  end
+end
+
+def versions(dir)
+  Dir.chdir(dir) do
+    `git tags --list`.split("\n").map do |tag|
+      Gem::Version.create(tag.sub(/^v/, '')) rescue nil
+    end.compact.sort
   end
 end
 
