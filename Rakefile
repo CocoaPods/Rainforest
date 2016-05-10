@@ -491,10 +491,10 @@ begin
 
     Rake::Task[:release].invoke(gem_dir)
 
-    return unless version != versions(gem_dir).last
+    break if version != versions(gem_dir).last
 
     title "Updating dependent gemspecs of #{name}"
-    gem_dirs = if p File.file?('topological_order.txt')
+    gem_dirs = if File.file?('topological_order.txt')
                  File.read('topological_order.txt').strip.split("\n")
                else
                  gem_dirs
