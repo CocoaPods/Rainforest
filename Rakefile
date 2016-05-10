@@ -399,7 +399,6 @@ begin
     web_repos_to_update = %w(guides.cocoapods.org trunk.cocoapods.org)
     web_repos_to_update.each do |repo|
       Dir.chdir(File.expand_path(repo, options['strata'])) do
-        ensure_master_and_clean!('.')
         gem_to_update = if File.read('Gemfile') =~ /(['"])cocoapods\1/
                           "cocoapods"
                         else
@@ -420,7 +419,6 @@ begin
 
     title 'Updating contributors on the website'
     Dir.chdir(File.expand_path('cocoapods.org', options['strata'])) do
-      ensure_master_and_clean!('.')
       sh "#{chruby_exec[]} postit exec rake generate"
       sh 'git', 'commit', '-am', "[Contributors] Update for the release of #{version}"
       sh "git push"
@@ -439,12 +437,11 @@ begin
     version = Gem::Version.create(args[:version])
     automatiek_dependents = [File.expand_path(options['rubygems']), File.expand_path(options['bundler'])]
     automatiek_dependents.each do |repo|
-      ensure_master_and_clean!(repo)
       Dir.chdir(repo) do
-        sh "git checkout -b seg-molinillo-#{version}"
+        sh "git checkout -b #{options['branch_prefix']}-molinillo-#{version}"
         sh "rake vendor:molinillo\\[#{version}\\]"
         sh "git commit -am 'Update vendored Molinillo to #{version}'"
-        sh "git push origin seg-molinillo-#{version}"
+        sh "git push origin #{options['branch_prefix']}-molinillo-#{version}"
         sh "git checkout master"
         confirm!("Make a pr to #{File.basename(repo)}:\n\nSee https://github.com/CocoaPods/Molinillo/releases/#{version}\n\n")
       end
@@ -453,8 +450,6 @@ begin
 
   task :super_release, [:gem_dir, :version] => 'ensure_master_and_clean:all' do |_t, args|
     require 'pathname'
-
-    gem_dirs.each(&method(:ensure_master_and_clean!))
 
     gem_dir = Pathname(args[:gem_dir])
     name    = nil
@@ -1097,12 +1092,16 @@ namespace :ensure_master_and_clean do |ensure_master_and_clean|
     end
   end
 
-  namespace 'strata' do
-    Dir[File.expand_path('*/', options['strata'])].each do |repo|
+  namespace :strata do |strata|
+    strata_dir = File.expand_path(options['strata'])
+    error('Missing Strata.') unless File.directory?(strata_dir)
+    Dir[File.join(strata_dir, '*/')].each do |repo|
       task File.basename(repo) do
         ensure_master_and_clean!(repo)
       end
     end
+
+    task :all => Rake.application.tasks_in_scope(strata.scope)
   end
 
   task :all => Rake.application.tasks_in_scope(ensure_master_and_clean.scope)
