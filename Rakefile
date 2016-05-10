@@ -494,6 +494,11 @@ begin
     return unless version != versions(gem_dir).last
 
     title "Updating dependent gemspecs of #{name}"
+    gem_dirs = if p File.file?('topological_order.txt')
+                 File.read('topological_order.txt').strip.split("\n")
+               else
+                 gem_dirs
+               end
     gem_dirs.each do |dir|
       gem_name = gem_name(dir)
       next unless spec(dir).dependencies.any? { |dep| dep.name == name }
@@ -515,6 +520,7 @@ begin
           silent_sh "postit update #{gem_name}"
           sh "git add #{spec} Gemfile.lock"
           sh 'git', 'commit', '-m', "[Gemspec] Bump #{gem_dir} to `#{dependency}`"
+          sh "git push origin #{current_branch}"
           puts
         end
       end
@@ -596,6 +602,7 @@ begin
       sh "git push origin #{current_branch}"
       sh "git checkout master"
       sh "git merge --no-edit #{gem_version}"
+      add_empty_master_changelog_section('.') && sh("git commit -am '[CHANGELOG] Add empty Master section'")
       sh "git push origin master"
       sh 'git push origin --tags'
 
@@ -982,7 +989,7 @@ end
 
 def versions(dir)
   Dir.chdir(dir) do
-    `git tags --list`.split("\n").map do |tag|
+    `git tag --list`.split("\n").map do |tag|
       Gem::Version.create(tag.sub(/^v/, '')) rescue nil
     end.compact.sort
   end
