@@ -315,6 +315,7 @@ begin
     def Bundler.root
       Bundler::SharedHelpers.pwd.expand_path
     end
+    ENV['BUNDLE_GEMFILE'] = 'Gemfile'
 
     gemfile = proc do
       gems.each do |name, repo|
@@ -330,6 +331,7 @@ begin
 
     bundler_module = class << Bundler; self; end
     bundler_module.send(:define_method, :root, old_root)
+    ENV.delete('BUNDLE_GEMFILE')
   end
 
   # Task clean-up
@@ -382,6 +384,155 @@ begin
   # Task Release
   #-----------------------------------------------------------------------------#
 
+  task :post_cocoapods_release, :version do |_t, args|
+    version = Gem::Version.create(args[:version])
+
+    chruby_exec = -> do
+      if `postit platform --ruby`.strip =~ /ruby (#{Gem::Version::VERSION_PATTERN})/
+        "SHELL=bash chruby-exec #{$1} -- "
+      else
+        ''
+      end
+    end
+
+    title "Updating CocoaPods versions elsewhere"
+    web_repos_to_update = %w(guides.cocoapods.org trunk.cocoapods.org)
+    web_repos_to_update.each do |repo|
+      Dir.chdir(File.expand_path(repo, options['strata'])) do
+        gem_to_update = if File.read('Gemfile') =~ /(['"])cocoapods\1/
+                          "cocoapods"
+                        else
+                          "cocoapods-core"
+                        end
+        subtitle "Updating #{gem_to_update} in #{repo}"
+        silent_sh "#{chruby_exec[]} postit update #{gem_to_update}"
+        sh "git add Gemfile.lock"
+        sh 'git', 'commit', '-m', "Update #{gem_to_update} to #{version}"
+        sh "git push"
+
+        if `git remote`.include?('heroku')
+          subtitle "Deploying to heroku"
+          silent_sh "git push heroku"
+        end
+      end
+    end
+
+    title 'Updating contributors on the website'
+    Dir.chdir(File.expand_path('cocoapods.org', options['strata'])) do
+      sh "#{chruby_exec[]} postit exec rake generate"
+      sh 'git', 'commit', '-am', "[Contributors] Update for the release of #{version}"
+      sh "git push"
+      sh "#{chruby_exec[]} postit exec rake deploy"
+    end
+
+    minor_update = version == Gem::Version.create(version.segments[0, 2].compact.join('.'))
+    if minor_update
+      confirm!('Go release the blog post!')
+    end
+    confirm!("Time to tweet!\n\n🎉 I just released @CocoaPods #{version} ____! 🚀\n\n📝 https://github.com/CocoaPods/CocoaPods/releases/#{version}\n\n\nYou tweeted it?")
+    confirm!("You retweeted from @CocoaPods?")
+  end
+
+  task :post_molinillo_release, :version do |_t, args|
+    version = Gem::Version.create(args[:version])
+    automatiek_dependents = [File.expand_path(options['rubygems']), File.expand_path(options['bundler'])]
+    automatiek_dependents.each do |repo|
+      Dir.chdir(repo) do
+        sh "git checkout -b #{options['branch_prefix']}-molinillo-#{version}"
+        sh "rake vendor:molinillo\\[#{version}\\]"
+        sh "git commit -am 'Update vendored Molinillo to #{version}'"
+        sh "git push origin #{options['branch_prefix']}-molinillo-#{version}"
+        sh "git checkout master"
+        confirm!("Make a pr to #{File.basename(repo)}:\n\nSee https://github.com/CocoaPods/Molinillo/releases/#{version}\n\n")
+      end
+    end
+  end
+
+  task :super_release, [:gem_dir, :version] => 'ensure_master_and_clean:all' do |_t, args|
+    raise 'Please configure options.yml to do a release' unless options
+
+    require 'pathname'
+
+    gem_dir = Pathname(args[:gem_dir])
+    name    = nil
+    version = Gem::Version.create(args[:version])
+
+    confirm!("## Master\n\n#{changelog_for_repo(gem_dir, 'Master')}\n\n\n Is this correct?")
+
+    title "Updating #{gem_dir} to #{version}"
+    Dir.chdir(gem_dir) do
+      subtitle "Updating the CHANGELOG"
+      changelog = Pathname("CHANGELOG.md")
+      changelog_contents = changelog.read
+      changelog_contents.sub!(/## Master/, "## #{version}")
+      changelog.open('w') { |f| f.write(changelog_contents) }
+
+      subtitle "Updating the gem version constant"
+      version_constant_pattern = /(VERSION = (['"]))#{Gem::Version::VERSION_PATTERN}\2/
+      unless version_file = Pathname.glob("lib/**/{gem_version,#{name},cocoapods_plugin,*}.rb").
+                                     find { |f| File.read(f) =~ version_constant_pattern }
+        error "Unable to find a file to bump the version constant in"
+      end
+      version_file_contents = File.read(version_file)
+      version_file_contents.sub!(version_constant_pattern, "\\1#{version}\\2")
+      File.open(version_file, 'w') { |f| f.write(version_file_contents) }
+
+      error('Failed to update the gem version') unless gem_version('.') == version
+
+      name = gem_name('.')
+
+      lockfile = Pathname("Gemfile.lock")
+      lockfile_contents = lockfile.read.gsub(/(^\s{6}#{name}\s)\(.*/, "\\1(= #{version})")
+      lockfile.open("w") { |f| f.write(lockfile_contents) }
+
+      subtitle "Running bundle update"
+      silent_sh "postit update #{name}"
+
+      confirm!("git diff:\n#{`git diff HEAD`}\n\nAre you ready to release these changes?")
+    end
+
+    Rake::Task[:release].invoke(gem_dir)
+
+    break if version != versions(gem_dir).last
+
+    title "Updating dependent gemspecs of #{name}"
+    gem_dirs = if File.file?('topological_order.txt')
+                 File.read('topological_order.txt').strip.split("\n")
+               else
+                 gem_dirs
+               end
+    gem_dirs.each do |dir|
+      gem_name = gem_name(dir)
+      next unless spec(dir).dependencies.any? { |dep| dep.name == name }
+      next if gem_name == 'cocoapods' && name == 'cocoapods-core'
+      Dir.chdir(dir) do
+        spec = Pathname("#{gem_name}.gemspec")
+        spec_contents = spec.read
+        dependency = if version.prerelease?
+                       "'#{version}'"
+                     elsif version.segments.first.zero?
+                       "'~> #{version}'"
+                     else
+                       "'>= #{version}', '< #{version.segments.first + 1}.0'"
+                     end
+        if spec_contents.sub!(/(dependency (['"])#{name}\2,\s+).+/, "\\1#{dependency}")
+          subtitle "Updating #{spec}'s dependency on #{name} to `#{dependency}`"
+          puts
+          spec.open('w') {|f| f.write(spec_contents)}
+          silent_sh "postit update #{gem_name}"
+          sh "git add #{spec} Gemfile.lock"
+          sh 'git', 'commit', '-m', "[Gemspec] Bump #{gem_dir} to `#{dependency}`"
+          sh "git push origin #{current_branch}"
+          puts
+        end
+      end
+    end
+
+    if task = Rake.application.lookup("post_#{name}_release")
+      task.invoke(version)
+    end
+  end
+
   # TODO: Should the bundles be updated?
   #
   desc 'Releases a gem: https://github.com/CocoaPods/Rainforest/wiki'
@@ -400,8 +551,7 @@ begin
     title "Releasing #{gem_name} #{gem_version} (from #{last_tag(gem_dir)})"
     unless ENV['SKIP_CHECKS']
       check_repo_for_release(gem_dir, gem_version)
-      print "You are about to release `#{gem_version}`, is that correct? [y/n] "
-      exit 1 if $stdin.gets.strip.downcase != 'y'
+      confirm!("You are about to release `#{gem_version}`, is that correct?")
     end
 
     if github_access_token
@@ -443,11 +593,19 @@ begin
       silent_sh "rm -rf '#{tmp}'"
       sh "gem install --install-dir='#{tmp_gems}' #{gem_filename}"
 
+      stable_branch = gem_version.segments[0, 2].join('-') + '-stable'
+
+      sh "git checkout -b #{stable_branch}" unless git_branch_list.include?(stable_branch)
+
       subtitle 'Commiting, Tagging, and Pushing'
       sh "git commit -a -m 'Release #{gem_version}'"
-      sh "git tag -a #{gem_version} -m 'Release #{gem_version}'"
+      sh "git tag -s #{gem_version} -m 'Release #{gem_version}'"
       add_empty_master_changelog_section('.') && sh("git commit -am '[CHANGELOG] Add empty Master section'")
-      sh 'git push origin master'
+      sh "git push origin #{current_branch}"
+      sh "git checkout master"
+      sh "git merge --no-edit #{gem_version}"
+      add_empty_master_changelog_section('.') && sh("git commit -am '[CHANGELOG] Add empty Master section'")
+      sh "git push origin master"
       sh 'git push origin --tags'
 
       subtitle 'Releasing the Gem'
@@ -652,10 +810,21 @@ def check_repo_for_release(repo_dir, version)
   end
 end
 
+def ensure_master_and_clean!(repo)
+  Dir.chdir(repo) do
+    if current_branch !~ /(\Amaster)|(-stable)\Z/
+      error "[#{repo}] You need to be on the `master` branch or a `stable` branch in order to do a release."
+    end
+    unless `git diff --name-only -z`.strip.split("\0").empty?
+      error "[#{repo}] There are uncommited changes, commit them to do a release."
+    end
+  end
+end
+
 # @return [Array<String>] All the checked out repos
 #
 def repos
-  Dir['*/'].map { |dir| dir[0...-1] }
+  Dir['*/'].map { |dir| dir[0...-1] } - %w(tmp)
 end
 
 # @return [Array<String>] All the directories that contains a Rakefile,
@@ -748,7 +917,7 @@ def add_empty_master_changelog_section(repo)
     changelog_file = 'CHANGELOG.md'
     changelog = File.read(changelog_file)
     return if changelog.match(/^## (.+)/).captures.first == 'Master'
-    return unless current_branch == 'master'
+    return unless current_branch =~ /(\Amaster|-stable)\z/
     # This uses an array of strings so text editors dont strip the trailing spaces
     changelog.sub! '##', ['## Master',
                           '',
@@ -780,7 +949,10 @@ def spec(gem_dir)
   files = Dir.glob("#{gem_dir}/*.gemspec")
   error("Unable to select a gemspec in #{gem_dir}") unless files.count == 1
   spec_path = files.first
-  Gem::Specification.load(spec_path.to_s)
+  eval(File.read(spec_path), binding, spec_path.to_s).tap do |spec|
+    raise "Failed to load #{spec_path}" unless spec
+    spec.loaded_from = spec_path.to_s
+  end
 end
 
 def validate_spec(spec)
@@ -817,6 +989,14 @@ def last_tag(dir)
   end
 end
 
+def versions(dir)
+  Dir.chdir(dir) do
+    `git tag --list`.split("\n").map do |tag|
+      Gem::Version.create(tag.sub(/^v/, '')) rescue nil
+    end.compact.sort
+  end
+end
+
 # Other Helpers
 #-----------------------------------------------------------------------------#
 
@@ -846,8 +1026,23 @@ def silent_sh(command)
   output
 end
 
+def options
+  return unless File.file?('options.yml')
+  @options ||= begin
+    require 'yaml'
+    YAML.load(File.read('options.yml'))
+  rescue => e
+    error "Ensure you have a valid options file.\n#{e}"
+  end
+end
+
 # UI
 #-----------------------------------------------------------------------------#
+
+def confirm!(message)
+  print "#{message} [y/n] "
+  exit 1 if $stdin.gets.strip.downcase != 'y'
+end
 
 # Prints a title.
 #
@@ -888,4 +1083,40 @@ end
 #
 def cyan(string)
   "\033[0;36m#{string}\033[0m"
+end
+
+# Task ensure_master_and_clean
+#----------------------------------------------------------------------------#
+
+namespace :ensure_master_and_clean do |ensure_master_and_clean|
+
+  GEM_REPOS.each do |repo|
+    task repo do
+      ensure_master_and_clean!(repo)
+    end
+  end
+
+  %w(bundler rubygems).each do |repo|
+    if repo_dir = options && options[repo]
+      task repo do
+        ensure_master_and_clean!(File.expand_path(repo_dir))
+      end
+    end
+  end
+
+  namespace :strata do |strata|
+    if strata_dir = options && options['strata']
+      strata_dir = File.expand_path(strata_dir)
+      error('Missing Strata.') unless File.directory?(strata_dir)
+      Dir[File.join(strata_dir, '*/')].each do |repo|
+        task File.basename(repo) do
+          ensure_master_and_clean!(repo)
+        end
+      end
+    end
+
+    task :all => Rake.application.tasks_in_scope(strata.scope)
+  end
+
+  task :all => Rake.application.tasks_in_scope(ensure_master_and_clean.scope)
 end

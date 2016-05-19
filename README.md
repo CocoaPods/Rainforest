@@ -70,6 +70,22 @@ $ rake -T
 - `update_rubocop_configuration[gem_dir]`: Update the shared CocoaPods RuboCop
   configuration for the given repo or for all the repos.
 
+### Release Configuration
+
+If you're using Rainforest to do releases on any of the CocoaPods gems,
+there are a few extra setup steps.
+
+- Create a `.github_access_token` in the root of this repo containing a GitHub
+  access token. This is needed to create GitHub releases via the GitHub API.
+- Create an `options.yml` file specifying the locations of `Strata`, `Bundler`,
+  and `RubyGems`. For example:
+
+  ```yaml
+  strata: ~/Development/Strata
+  bundler: ~/Development/OpenSource/bundler
+  rubygems: ~/Development/OpenSource/rubygems
+  ```
+
 
 ## Collaborate
 
