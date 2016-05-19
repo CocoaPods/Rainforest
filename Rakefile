@@ -1094,17 +1094,21 @@ namespace :ensure_master_and_clean do |ensure_master_and_clean|
   end
 
   %w(bundler rubygems).each do |repo|
-    task repo do
-      ensure_master_and_clean!(File.expand_path(options[repo]))
+    if repo_dir = options[repo]
+      task repo do
+        ensure_master_and_clean!(File.expand_path(repo_dir))
+      end
     end
   end
 
   namespace :strata do |strata|
-    strata_dir = File.expand_path(options['strata'])
-    error('Missing Strata.') unless File.directory?(strata_dir)
-    Dir[File.join(strata_dir, '*/')].each do |repo|
-      task File.basename(repo) do
-        ensure_master_and_clean!(repo)
+    if strata_dir = options['strata']
+      strata_dir = File.expand_path(strata_dir)
+      error('Missing Strata.') unless File.directory?(strata_dir)
+      Dir[File.join(strata_dir, '*/')].each do |repo|
+        task File.basename(repo) do
+          ensure_master_and_clean!(repo)
+        end
       end
     end
 
