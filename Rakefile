@@ -449,6 +449,8 @@ begin
   end
 
   task :super_release, [:gem_dir, :version] => 'ensure_master_and_clean:all' do |_t, args|
+    raise 'Please configure options.yml to do a release' unless options
+
     require 'pathname'
 
     gem_dir = Pathname(args[:gem_dir])
@@ -1025,6 +1027,7 @@ def silent_sh(command)
 end
 
 def options
+  return unless File.file?('options.yml')
   @options ||= begin
     require 'yaml'
     YAML.load(File.read('options.yml'))
@@ -1094,7 +1097,7 @@ namespace :ensure_master_and_clean do |ensure_master_and_clean|
   end
 
   %w(bundler rubygems).each do |repo|
-    if repo_dir = options[repo]
+    if repo_dir = options && options[repo]
       task repo do
         ensure_master_and_clean!(File.expand_path(repo_dir))
       end
@@ -1102,7 +1105,7 @@ namespace :ensure_master_and_clean do |ensure_master_and_clean|
   end
 
   namespace :strata do |strata|
-    if strata_dir = options['strata']
+    if strata_dir = options && options['strata']
       strata_dir = File.expand_path(strata_dir)
       error('Missing Strata.') unless File.directory?(strata_dir)
       Dir[File.join(strata_dir, '*/')].each do |repo|
