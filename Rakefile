@@ -92,6 +92,11 @@ begin
     title 'Unshallowing gem repositories'
     repos.each do |dir|
       Dir.chdir(dir) do
+        # Shallow clones are setup so that they fetch only master by default
+        subtitle "Overwrite fetch configuration"
+        system('git', 'config', '--set', '--local',
+               'remote.origin.fetch', '+refs/heads/*:refs/remotes/origin/*')
+
         subtitle "Unshallowing #{dir}"
         system('git', 'fetch', '--unshallow')
       end
