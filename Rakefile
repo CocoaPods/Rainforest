@@ -1032,10 +1032,11 @@ def silent_sh(command)
 end
 
 def options
-  return unless File.file?('options.yml')
+  options_file = File.expand_path('../options.yml', __FILE__)
+  return unless File.file?(options_file)
   @options ||= begin
     require 'yaml'
-    YAML.load(File.read('options.yml'))
+    YAML.load(File.read(options_file))
   rescue => e
     error "Ensure you have a valid options file.\n#{e}"
   end
