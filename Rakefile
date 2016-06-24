@@ -608,7 +608,12 @@ begin
       add_empty_master_changelog_section('.') && sh("git commit -am '[CHANGELOG] Add empty Master section'")
       sh "git push origin #{current_branch}"
       sh "git checkout master"
-      sh "git merge --no-edit #{gem_version}"
+      begin
+        sh "git merge --no-ff --no-edit #{gem_version}"
+      rescue
+        confirm! "Fix the merge conflicts, add the conflicted files, and don't commit"
+        sh "git commit --no-edit"
+      end
       add_empty_master_changelog_section('.') && sh("git commit -am '[CHANGELOG] Add empty Master section'")
       sh "git push origin master"
       sh 'git push origin --tags'
