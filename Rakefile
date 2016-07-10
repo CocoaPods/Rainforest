@@ -260,6 +260,7 @@ begin
       Dir.chdir(dir) do
         base_branch = default_branch
         branches = git_branch_list(" --no-merged #{base_branch}")
+        branches.reject! { |b| b.end_with?('-stable') }
         "#{dir}: #{branches.join(', ')}" unless branches.empty?
       end
     end.compact
@@ -290,8 +291,8 @@ begin
       tag = last_tag(dir)
       if tag != ''
         Dir.chdir(dir) do
-          # subtract 1 to account for the empty changelog section commit
-          commits_since_last_tag = `git rev-list #{tag}..HEAD --count`.chomp.to_i - 1
+          # subtract 2 to account for the empty changelog section commit & merge of tag
+          commits_since_last_tag = `git rev-list #{tag}..HEAD --count`.chomp.to_i - 2
           commits_since_last_tag = 0 if commits_since_last_tag <= 0
           unless commits_since_last_tag.zero?
             has_pending_releases = true
