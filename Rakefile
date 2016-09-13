@@ -21,6 +21,7 @@ GEM_REPOS = %w(
   cocoapods-try
   Core
   Cork
+  fourflusher
   Molinillo
   Xcodeproj
 )
