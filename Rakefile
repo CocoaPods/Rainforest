@@ -506,7 +506,7 @@ begin
     gem_dirs = if File.file?('topological_order.txt')
                  File.read('topological_order.txt').strip.split("\n")
                else
-                 gem_dirs
+                 self.gem_dirs
                end
     gem_dirs.each do |dir|
       gem_name = gem_name(dir)
