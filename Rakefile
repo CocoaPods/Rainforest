@@ -23,6 +23,7 @@ GEM_REPOS = %w(
   Cork
   fourflusher
   Molinillo
+  Nanaimo
   Xcodeproj
 )
 
