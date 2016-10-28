@@ -448,6 +448,8 @@ begin
       Dir.chdir(repo) do
         sh "git checkout -b #{options['branch_prefix']}-molinillo-#{version}"
         sh "rake vendor:molinillo\\[#{version}\\]"
+        sh "git add -A"
+        confirm!("git diff:\n#{`git diff HEAD`}\n\nAre you ready to release these changes?")
         sh "git commit -am 'Update vendored Molinillo to #{version}'"
         sh "git push origin #{options['branch_prefix']}-molinillo-#{version}"
         sh "git checkout master"
