@@ -19,6 +19,9 @@ In detail, the following tasks can be performed from a centralised location:
 
 [Local Git Repos]: http://bundler.io/v1.5/git.html
 
+## Ruby Version
+
+While there is no recommendation to use a specific version of Ruby, note that there are issues with certain dependencies under Ruby 2.2.x and higher.
 
 ## Usage
 
