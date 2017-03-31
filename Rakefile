@@ -114,7 +114,7 @@ begin
     rakefile_repos.each do |dir|
       Dir.chdir(dir) do
         subtitle "Bootstrapping #{dir}"
-        sh 'rake --no-search bootstrap' if rake_task?('bootstrap', :allow_bundler => false)
+        sh 'rake --no-search bootstrap' if rake_task?('bootstrap')
       end
     end
 
@@ -1019,6 +1019,7 @@ end
 #         task with the given name.
 #
 def rake_task?(task, allow_bundler: true)
+  `bundle check || bundle install`
   command = "rake --no-search --tasks '#{task}'"
   if allow_bundler
     begin
