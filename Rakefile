@@ -1019,6 +1019,7 @@ end
 #         task with the given name.
 #
 def rake_task?(task, allow_bundler: true)
+  `bundle check || bundle install`
   command = "rake --no-search --tasks '#{task}'"
   if allow_bundler
     begin
