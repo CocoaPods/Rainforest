@@ -17,7 +17,7 @@ In detail, the following tasks can be performed from a centralised location:
 - Check the status of each repository, scanning for dirty working copies or
   gems which should be released.
 
-[Local Git Repos]: http://bundler.io/v1.5/git.html
+[Local Git Repos]: https://bundler.io/guides/git.html
 
 
 ## Usage
@@ -94,7 +94,7 @@ All CocoaPods development happens on GitHub; there is a repository for
 specs](https://github.com/CocoaPods/Specs). Contributing patches or Pods is
 really easy and gratifying.
 
-Follow [@CocoaPods](http://twitter.com/CocoaPods) to get up to date
+Follow [@CocoaPods](https://twitter.com/CocoaPods) to get up to date
 information about what's going on in the CocoaPods world.
 
 ## License
