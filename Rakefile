@@ -96,11 +96,13 @@ begin
       Dir.chdir(dir) do
         # Shallow clones are setup so that they fetch only master by default
         subtitle "Overwrite fetch configuration"
-        system('git', 'config', '--set', '--local',
-               'remote.origin.fetch', '+refs/heads/*:refs/remotes/origin/*')
+        system('git', 'config', '--local', 'remote.origin.fetch', '+refs/heads/*:refs/remotes/origin/*')
 
         subtitle "Unshallowing #{dir}"
         system('git', 'fetch', '--unshallow')
+
+        subtitle "Fetching #{dir} tags"
+        system('git', 'fetch', '--tags')
       end
     end
   end
