@@ -27,6 +27,18 @@ GEM_REPOS = %w(
   Xcodeproj
 )
 
+OWNERS = %w(
+  info@cocoapods.org
+)
+
+task :add_owners do
+  GEM_REPOS.each do |repo|
+    OWNERS.each do |owner|
+      system('gem', 'owner', repo.downcase, '-a', owner) if repo
+    end
+  end
+end
+
 # @return [Array<String>] The list of the repos contains "template" contents
 #         to be used as a model.
 #
@@ -84,6 +96,17 @@ begin
     repos = fetch_repos
     title 'Cloning gem repositories'
     clone_repos(repos)
+  end
+
+  desc 'Checkout master for all gem repos, stashing any changes.'
+  task :checkout_master do
+    GEM_REPOS.each do |name|
+      subtitle "Checking out #{name}"
+      Dir.chdir(name) do
+        system('git', 'stash')
+        system('git', 'checkout', 'master')
+      end
+    end
   end
 
   # Task unshallow
@@ -151,22 +174,23 @@ begin
       puts yellow("\n[!] The Rainforest repository itself has been updated.\n" \
            "You should run `rake bootstrap` to update all repositories\n" \
            'and fetch the potentially new ones.')
-    else
-      updated_repos = []
-      repos.each do |dir|
-        Dir.chdir(dir) do
-          updated = pull_current_repo(true)
-          updated_repos << dir if updated
-        end
-      end
+      exit 1
+    end
 
-      unless updated_repos.empty?
-        title 'Summary'
-        updated_repos.each do |dir|
-          subtitle dir
-          Dir.chdir(dir) do
-            puts `git log ORIG_HEAD..`
-          end
+    updated_repos = []
+    repos.each do |dir|
+      Dir.chdir(dir) do
+        updated = pull_current_repo(true)
+        updated_repos << dir if updated
+      end
+    end
+
+    unless updated_repos.empty?
+      title 'Summary'
+      updated_repos.each do |dir|
+        subtitle dir
+        Dir.chdir(dir) do
+          puts `git log ORIG_HEAD..`
         end
       end
     end
@@ -399,7 +423,7 @@ begin
 
     chruby_exec = -> do
       if `postit platform --ruby`.strip =~ /ruby (#{Gem::Version::VERSION_PATTERN})/
-        "SHELL=bash chruby-exec #{$1} -- "
+          "chruby-exec 2.1.3 -- "
       else
         ''
       end
@@ -428,13 +452,20 @@ begin
     end
 
     title 'Updating contributors on the website'
-    Dir.chdir(File.expand_path('cocoapods.org', options['strata'])) do
+    Dir.chdir('cocoapods.org') do
       sh "#{chruby_exec[]} postit exec rake generate"
       sh 'git', 'commit', '-am', "[Contributors] Update for the release of #{version}"
       sh "git push"
       sh "#{chruby_exec[]} postit exec rake deploy"
     end
 
+    if task = Rake.application.lookup("tweet_release")
+      task.invoke(args[:version])
+    end
+  end
+
+  task :tweet_release, :version do |_t, args|
+    version = Gem::Version.create(args[:version])
     minor_update = version == Gem::Version.create(version.segments[0, 2].compact.join('.'))
     if minor_update
       confirm!('Go release the blog post!')
@@ -482,8 +513,8 @@ begin
       subtitle "Updating the gem version constant"
       version_constant_pattern = /(VERSION = (['"]))#{Gem::Version::VERSION_PATTERN}\2/
       unless version_file = Pathname.glob("lib/**/{gem_version,#{name},cocoapods_plugin,*}.rb").
-                                     find { |f| File.read(f) =~ version_constant_pattern }
-        error "Unable to find a file to bump the version constant in"
+          find { |f| File.read(f) =~ version_constant_pattern }
+          error "Unable to find a file to bump the version constant in"
       end
       version_file_contents = File.read(version_file)
       version_file_contents.sub!(version_constant_pattern, "\\1#{version}\\2")
@@ -507,6 +538,17 @@ begin
 
     break if version != versions(gem_dir).last
 
+    Rake::Task[:update_dependent_gemspecs].invoke(name, gem_dir, version)
+
+    if task = Rake.application.lookup("post_#{name}_release")
+      task.invoke(version)
+    end
+  end
+
+  task :update_dependent_gemspecs, [:gem_name, :gem_dir, :version]  do |_t, args|
+    name = args[:gem_name]
+    gem_dir = args[:gem_name]
+    version = args[:version]
     title "Updating dependent gemspecs of #{name}"
     gem_dirs = if File.file?('topological_order.txt')
                  File.read('topological_order.txt').strip.split("\n")
@@ -579,13 +621,17 @@ begin
       subtitle 'Updating the repo'
       sh 'git pull --no-rebase'
 
-      subtitle 'Running specs'
-      sh 'bundle exec rake spec'
+      if ENV['SKIP_SPECS'] != 'true'
+        subtitle 'Running specs'
+        sh 'bundle exec rake spec'
+      else
+        subtitle 'Skipping running specs'
+      end
 
-      subtitle 'Adding release date to CHANGELOG'
-      changelog = File.read('CHANGELOG.md')
-      changelog.sub!("## #{gem_version}\n") { |_s| "## #{gem_version} (" << Time.now.utc.strftime('%F') << ")\n" }
-      File.open('CHANGELOG.md', 'w') { |f| f << changelog }
+       subtitle 'Adding release date to CHANGELOG'
+       changelog = File.read('CHANGELOG.md')
+       changelog.sub!("## #{gem_version}\n") { |_s| "## #{gem_version} (" << Time.now.utc.strftime('%F') << ")\n" }
+       File.open('CHANGELOG.md', 'w') { |f| f << changelog }
 
       if rake_task?('pre_release')
         subtitle 'Running pre-release task'
@@ -606,21 +652,14 @@ begin
       sh "gem install --install-dir='#{tmp_gems}' #{gem_filename}"
 
       stable_branch = gem_version.segments[0, 2].join('-') + '-stable'
-
       sh "git checkout -b #{stable_branch}" unless git_branch_list.include?(stable_branch)
 
       subtitle 'Commiting, Tagging, and Pushing'
       sh "git commit -a -m 'Release #{gem_version}'"
       sh "git tag -s #{gem_version} -m 'Release #{gem_version}'"
-      add_empty_master_changelog_section('.') && sh("git commit -am '[CHANGELOG] Add empty Master section'")
-      sh "git push origin #{current_branch}"
+      sh "git push origin #{current_branch} --force"
       sh "git checkout master"
-      begin
-        sh "git merge --no-ff --no-edit #{gem_version}"
-      rescue
-        confirm! "Fix the merge conflicts, add the conflicted files, and don't commit"
-        sh "git commit --no-edit"
-      end
+      sh "git merge --ff-only #{stable_branch}"
       add_empty_master_changelog_section('.') && sh("git commit -am '[CHANGELOG] Add empty Master section'")
       sh "git push origin master"
       sh 'git push origin --tags'
@@ -871,21 +910,19 @@ end
 
 def make_github_release(repo, version, tag, access_token)
   body = changelog_for_repo(repo, version)
-
   REST.post("https://api.github.com/repos/CocoaPods/#{repo}/releases?access_token=#{access_token}",
             {
               :tag_name => tag,
               :name => version.to_s,
               :body => body,
               :prerelease => version.prerelease?,
-            }.to_json,
-            {
-              'Content-Type' => 'application/json',
-              'User-Agent' => 'runscope/0.1,segiddins',
-              'Accept' => '*/*',
-              'Accept-Encoding' => 'gzip, deflate',
-            },
-           )
+  }.to_json,
+  {
+    'Content-Type' => 'application/json',
+    'User-Agent' => 'runscope/0.1,segiddins',
+    'Accept' => '*/*',
+    'Accept-Encoding' => 'gzip, deflate',
+  })
 end
 
 def changelog_for_repo(repo, version)
@@ -914,9 +951,8 @@ def changelog_for_repo(repo, version)
 end
 
 def github_access_token
+  require 'pathname'
   Pathname('.github_access_token').expand_path.read.strip
-rescue
-  nil
 end
 
 def github_access_token_query
