@@ -623,6 +623,8 @@ begin
         subtitle 'Running post_release task'
         sh 'bundle exec rake post_release'
       end
+
+      puts yellow("\n[!] Please follow up and ensure that #{stable_branch} is merged into master!\n") unless current_branch == 'master'
     end
 
     if github_access_token
@@ -632,8 +634,6 @@ begin
     end
 
     `open https://rubygems.org/gems/#{gem_name}`
-
-    puts yellow("\n[!] Please follow up and ensure that #{stable_branch} is merged into master!\n") unless current_branch == 'master'
   end
 
   # Task Update RuboCop configuration
