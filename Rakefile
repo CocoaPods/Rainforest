@@ -614,8 +614,6 @@ begin
       sh "git tag -s #{gem_version} -m 'Release #{gem_version}'"
       add_empty_master_changelog_section('.') && sh("git commit -am '[CHANGELOG] Add empty Master section'")
       sh "git push origin #{current_branch}"
-      puts yellow("\n[!] Please follow up and ensure that #{stable_branch} is merged into master!\n") unless current_branch == 'master'
-      sh "git checkout master"
       sh 'git push origin --tags'
 
       subtitle 'Releasing the Gem'
@@ -634,6 +632,8 @@ begin
     end
 
     `open https://rubygems.org/gems/#{gem_name}`
+
+    puts yellow("\n[!] Please follow up and ensure that #{stable_branch} is merged into master!\n") unless current_branch == 'master'
   end
 
   # Task Update RuboCop configuration
