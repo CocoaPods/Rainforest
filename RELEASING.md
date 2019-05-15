@@ -35,8 +35,9 @@ Example `options.yml` file:
 4. Run `rake topological_order > topological_order.txt`.
 5. For each gem you want to release, in topological order (go from the top of `topological_order.txt` to the bottom), run:
     1. Check formatting of latest release in the `CHANGELOG.md`.
-    2. Run `rake super_release:[REPO_NAME, VERSION]` (e.g. `rake super_release\[Core,1.7.0\]`.
-    3. If `super_release` _fails_ for a gem then do the following:
+    2. Install and use the latest Ruby version used specified in `.travis.yml` file.
+    3. Run `rake super_release:[REPO_NAME, VERSION]` (e.g. `rake super_release\[Core,1.7.0\]`.
+    4. If `super_release` _fails_ for a gem then do the following:
         1. `cd` into the gem directory that failed.
         2. Run `git reset --hard`.
         3. Get the failure fixed, and start over.
