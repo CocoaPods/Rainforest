@@ -907,6 +907,8 @@ def changelog_for_repo(repo, version)
 end
 
 def github_access_token
+  require 'pathname'
+
   Pathname('.github_access_token').expand_path.read.strip
 rescue
   nil
