@@ -23,7 +23,7 @@ Example `options.yml` file:
 
 7. Generate a GitHub [access token](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line) into your GitHub [account](https://github.com/settings/tokens) access tokens with repo permissions and write it to `.github_access_token` file.
 8. Make sure [GPG](https://www.gnupg.org) is setup to your GitHub [account](https://github.com/settings/keys) keys.
-9. Clone [https://github.com/CocoaPods/Specs]CocoaPods/Specs to `./Rainforest/Specs` if releasing CocoaPods.
+9. Clone [CocoaPods/Specs](https://github.com/CocoaPods/Specs) repo into `./Rainforest/Specs` if releasing CocoaPods.
 10. Get access to the gems you want to publish on [rubygems.org](https://rubygems.org).
 11. It is a good idea to run `bundle install` within the [CocoaPods](https://github.com/CocoaPods/CocoaPods) to ensure [Bundler](https://bundler.io) can be configured successfully.
 
