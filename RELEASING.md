@@ -5,7 +5,7 @@
 1. Clone [Strata](https://github.com/CocoaPods/Strata)
 2. Run `rake clone` to setup the [Strata](https://github.com/CocoaPods/Strata) repo and all of its submodules.
 3. Clone [Rainforest](https://github.com/CocoaPods/Rainforest).
-4  Run through Rainforest [README](https://github.com/CocoaPods/Rainforest/blob/master/README.md) to setup the repo and all of its submodules. Note that this may take a while.
+4. Run through Rainforest [README](https://github.com/CocoaPods/Rainforest/blob/master/README.md) to setup the repo and all of its submodules. Note that this may take a while.
 5. Run `gem install postit`.
 6. Setup `options.yml` configuration file:
     1. Include option for `strata` pointing to your Strata repo.
