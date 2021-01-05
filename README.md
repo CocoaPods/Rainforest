@@ -1,3 +1,6 @@
+# This repo needs updating.
+For most contributions you can just fork https://github.com/CocoaPods/CocoaPods instead. Don't attempt `rake bootstrap`. You could run into all sorts of ruby and rake versioning issues. 
+
 # CocoaPods Rainforest
 
 [![Build Status](https://img.shields.io/travis/CocoaPods/Rainforest/master.svg?style=flat)](https://travis-ci.org/CocoaPods/Rainforest)
