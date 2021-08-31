@@ -481,7 +481,7 @@ begin
 
       subtitle "Updating the gem version constant"
       version_constant_pattern = /(VERSION = (['"]))#{Gem::Version::VERSION_PATTERN}\2/
-      unless version_file = Pathname.glob("lib/**/{gem_version,#{name},cocoapods_plugin,*}.rb").
+      unless version_file = Pathname.glob("lib/**/{gem_version,#{name},cocoapods_plugin}.rb").
                                      find { |f| File.read(f) =~ version_constant_pattern }
         error "Unable to find a file to bump the version constant in"
       end
@@ -714,7 +714,7 @@ def fetch_repos
   url = "https://api.github.com/orgs/CocoaPods/repos?type=public&#{github_access_token_query}"
   repos = []
   loop do
-    file = open(url)
+    file = OpenURI.open_uri(url)
     response = file.read
     repos.concat(JSON.parse(response))
 
