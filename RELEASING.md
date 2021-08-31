@@ -2,6 +2,8 @@
 
 #### Environment Setup
 
+Make sure to follow any initial setup instructions specified in the [README.md](README.md).
+
 1. Clone [Strata](https://github.com/CocoaPods/Strata)
 2. Run `rake clone` to setup the [Strata](https://github.com/CocoaPods/Strata) repo and all of its submodules.
 3. Clone [Rainforest](https://github.com/CocoaPods/Rainforest).
