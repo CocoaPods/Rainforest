@@ -711,10 +711,10 @@ def fetch_repos
   require 'json'
   require 'open-uri'
   title 'Fetching repositories list'
-  url = "https://api.github.com/orgs/CocoaPods/repos?type=public&#{github_access_token_query}"
+  url = "https://api.github.com/orgs/CocoaPods/repos?type=public"
   repos = []
   loop do
-    file = OpenURI.open_uri(url)
+    file = OpenURI.open_uri(url, { 'Authorization: token' => github_access_token_query })
     response = file.read
     repos.concat(JSON.parse(response))
 
