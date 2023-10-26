@@ -147,26 +147,22 @@ begin
   desc 'Pulls all the repositories & updates their submodules'
   task :pull do
     title 'Pulling all the repositories'
-    if pull_current_repo(false)
-      puts yellow("\n[!] The Rainforest repository itself has been updated.\n" \
-           "You should run `rake bootstrap` to update all repositories\n" \
-           'and fetch the potentially new ones.')
-    else
-      updated_repos = []
-      repos.each do |dir|
-        Dir.chdir(dir) do
-          updated = pull_current_repo(true)
-          updated_repos << dir if updated
-        end
-      end
+    pull_current_repo(false)
 
-      unless updated_repos.empty?
-        title 'Summary'
-        updated_repos.each do |dir|
-          subtitle dir
-          Dir.chdir(dir) do
-            puts `git log ORIG_HEAD..`
-          end
+    updated_repos = []
+    repos.each do |dir|
+      Dir.chdir(dir) do
+        updated = pull_current_repo(true)
+        updated_repos << dir if updated
+      end
+    end
+
+    unless updated_repos.empty?
+      title 'Summary'
+      updated_repos.each do |dir|
+        subtitle dir
+        Dir.chdir(dir) do
+          puts `git log ORIG_HEAD..`
         end
       end
     end
