@@ -477,7 +477,7 @@ begin
 
       subtitle "Updating the gem version constant"
       version_constant_pattern = /(VERSION = (['"]))#{Gem::Version::VERSION_PATTERN}\2/
-      unless version_file = Pathname.glob("lib/**/{gem_version,#{name},cocoapods_plugin}.rb").
+      unless version_file = Pathname.glob("lib/**/{gem_version,#{name},cocoapods_plugin,version}.rb").
                                      find { |f| File.read(f) =~ version_constant_pattern }
         error "Unable to find a file to bump the version constant in"
       end
