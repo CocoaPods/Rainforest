@@ -12,11 +12,9 @@ GEM_REPOS = %w(
   CocoaPods
   cocoapods-acknowledgements
   cocoapods-deintegrate
-  cocoapods-docs
   cocoapods-downloader
   cocoapods-plugins
   cocoapods-search
-  cocoapods-stats
   cocoapods-trunk
   cocoapods-try
   Core
