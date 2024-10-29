@@ -23,7 +23,7 @@ Example `options.yml` file:
   bundler: '~/Development/bundler' # Optional unless a Molinillo release is required.
 ```
 
-7. Generate a GitHub [access token](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line) into your GitHub [account](https://github.com/settings/tokens) access tokens with repo permissions and write it to `.github_access_token` file.
+7. Install `gh` CLI tool via `brew install gh` and run `gh auth login`.
 8. Make sure [GPG](https://www.gnupg.org) is setup to your GitHub [account](https://github.com/settings/keys) keys.
 9. Get access to the gems you want to publish on [rubygems.org](https://rubygems.org).
 10. It is a good idea to run `bundle install` within the [CocoaPods](https://github.com/CocoaPods/CocoaPods) to ensure [Bundler](https://bundler.io) can be configured successfully.
