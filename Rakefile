@@ -734,7 +734,7 @@ end
 #
 # @return [void]
 #
-def clone_repos(repos, shallow=true)
+def clone_repos(repos, shallow=false)
   repos.each do |repo|
     name = repo['name']
     subtitle "Cloning #{name}"
